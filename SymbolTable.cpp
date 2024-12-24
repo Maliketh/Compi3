@@ -1,4 +1,6 @@
-#include "SymbolTable.h"
+#include "SymbolTable.hpp"
+#include "output.hpp"
+#include "nodes.hpp"
 
 // Constructor initializes the symbol table
 SymbolTable::SymbolTable() {
@@ -12,23 +14,30 @@ SymbolTable::~SymbolTable() {
 }
 
 // Insert a symbol into the current scope
-bool SymbolTable::insertSymbol(const std::string& name, SymbolType type, const std::string& returnType, const std::vector<std::string>& argTypes) {
+bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type,   const std::vector<ast::BuiltInType> &paramTypes) {
     if (currentScope->hasSymbol(name)) {
         std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
         return false;
     }
 
     // Insert the symbol into the current scope
-    if (currentScope->insertSymbol(name, type, returnType, argTypes)) {
-        // If it's a function, add it to the global function registry
-        if (type == SymbolType::FUNCTION) {
-            globalFunctionRegistry[name] = Symbol(name, type, returnType, 0);  // Offset irrelevant for global functions
-            globalFunctionRegistry[name].argumentTypes = argTypes;
-        }
-        return true;
+    if (currentScope->insertSymbol(name, type, paramTypes)) {
+        globalFunctionRegistry[name] = Symbol(name, type, 0);  // Offset irrelevant for global functions
+        globalFunctionRegistry[name].paramTypes = paramTypes;
     }
-    return false;
+    return true;
 }
+
+bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type) {
+    if (currentScope->hasSymbol(name)) {
+        std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
+        return false;
+    }
+    // Insert the symbol into the current scope
+    currentScope->insertSymbol(name, type);
+    return true;
+}
+
 
 // Look up a symbol in the current scope or higher scopes
 Symbol* SymbolTable::lookupSymbol(const std::string& name) {
@@ -40,27 +49,39 @@ bool SymbolTable::isFunctionDefined(const std::string& funcName) const {
     return globalFunctionRegistry.find(funcName) != globalFunctionRegistry.end();
 }
 
-// Check if a function call is valid (function exists and argument types match)
-bool SymbolTable::checkFunctionCall(const std::string& funcName, const std::vector<std::string>& argTypes) {
+// Check if a function call is valid
+bool SymbolTable::checkFunctionCall(const std::string& funcName) {
     auto it = globalFunctionRegistry.find(funcName);
     if (it == globalFunctionRegistry.end()) {
         std::cerr << "Error: Function '" << funcName << "' is not defined.\n";
         return false;
     }
 
-    const Symbol& funcSymbol = it->second;
-
-    // Check argument types match
-    if (funcSymbol.argumentTypes != argTypes) {
-        std::cerr << "Error: Function '" << funcName << "' argument types do not match.\n";
-        return false;
-    }
     return true;
 }
 
 // Enter a new scope
-void SymbolTable::enterScope() {
-    Scope* newScope = new Scope();
+void SymbolTable::enterScope(ScopeType type) {
+    Scope* newScope = new Scope(type);
+    newScope->ret_scope_type = ast::BuiltInType::NONE;
+    currentScope = newScope;
+}
+
+void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& params_type, std::vector<std::string>& params_names, ast::BuiltInType ret_type) {
+    Scope* newScope = new Scope(type);
+    newScope->ret_scope_type = ret_type;
+    int location = -1;
+    std::string name;
+    ast::BuiltInType type_param = ast::BuiltInType::NONE;
+    for (int i = 0; i < params_type.size() ; i++)
+    {
+        name =params_names[i];
+        type_param = params_type[i];
+        newScope->insertSymbol(name,type_param, location);
+        newScope->scopePrinter.emitVar(name, type_param, location);
+        location--;
+    }
+    newScope->ret_scope_type = ast::BuiltInType::NONE;
     currentScope = newScope;
 }
 
@@ -68,24 +89,55 @@ void SymbolTable::enterScope() {
 void SymbolTable::exitScope() {
     Scope* oldScope = currentScope;
     currentScope = nullptr;
+    std::cout << oldScope->scopePrinter <<std::endl;
     delete oldScope;
 }
 
 // Initialize the global scope with predefined functions (print, printi)
 void SymbolTable::initializeGlobalScope() {
-    enterScope();
+    enterScope(ScopeType::GLOBAL);
 
     // Add predefined functions print and printi
-    insertSymbol("print", SymbolType::FUNCTION, "void", { "string" });
-    insertSymbol("printi", SymbolType::FUNCTION, "void", { "int" });
+    insertSymbol("print", ast::BuiltInType::VOID, { ast::BuiltInType::STRING });
+    insertSymbol("printi",ast::BuiltInType::VOID, { ast::BuiltInType::INT });
 }
 
-// Scope class: Insert and get symbols within a scope
-bool Scope::insertSymbol(const std::string& name, SymbolType type, const std::string& returnType, const std::vector<std::string>& argTypes) {
-    if (symbols.find(name) != symbols.end()) {
+
+ast::BuiltInType SymbolTable::getSymbolType(std::string& name) {
+    if (currentScope != nullptr)
+        return currentScope->getSymbolType(name);
+    return ast::BuiltInType::NONE;
+}
+//function
+bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes) {
+    if (this->hasSymbol(name)) {
         return false; // Symbol already exists
     }
-    symbols[name] = Symbol(name, type, returnType, nextOffset);
+    symbols[name] = Symbol(name, type,  paramTypes);
+    this->scopePrinter.emitFunc(name, type,  paramTypes);
+    this->offset++;
+
+    return true;
+}
+
+bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type) {
+    if (this->hasSymbol(name)) {
+        return false; // Symbol already exists
+    }
+    symbols[name] = Symbol(name, type, this->offset);
+    this->scopePrinter.emitVar(name, type,this->offset);
+    this->offset++;
+
+    return true;
+}
+
+bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type, int count) {
+    if (this->hasSymbol(name)) {
+        return false; // Symbol already exists
+    }
+    symbols[name] = Symbol(name, type, (size_t) count);
+    this->scopePrinter.emitVar(name, type,(size_t) count);
+
     return true;
 }
 
@@ -93,5 +145,8 @@ Symbol* Scope::getSymbol(const std::string& name) {
     if (symbols.find(name) != symbols.end()) {
         return &symbols[name];
     }
+    if (this->parent_scope)
+        return parent_scope->getSymbol(name);
     return nullptr;
 }
+
