@@ -63,7 +63,7 @@ public:
             return p_symbol->getType();
         return ast::BuiltInType::NONE;
     }
-    bool insertSymbol(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
+    bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
     bool insertSymbol(const std::string& name, ast::BuiltInType type);
     bool insertSymbol(const std::string& name, ast::BuiltInType type, int count);
 
@@ -79,7 +79,7 @@ public:
     SymbolTable();
     ~SymbolTable();
 
-    bool insertSymbol(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
+    bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
     bool insertSymbol(const std::string& name, ast::BuiltInType type);
     Symbol* lookupSymbol(const std::string& name);
     bool isFunctionDefined(const std::string& funcName) const;

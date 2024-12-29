@@ -14,14 +14,14 @@ SymbolTable::~SymbolTable() {
 }
 
 // Insert a symbol into the current scope
-bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type,   const std::vector<ast::BuiltInType> &paramTypes) {
+bool SymbolTable::insertSymbolFunc(const std::string& name, ast::BuiltInType type,   const std::vector<ast::BuiltInType> &paramTypes) {
     if (currentScope->hasSymbol(name)) {
         std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
         return false;
     }
 
     // Insert the symbol into the current scope
-    if (currentScope->insertSymbol(name, type, paramTypes)) {
+    if (currentScope->insertSymbolFunc(name, type, paramTypes)) {
         globalFunctionRegistry[name] = Symbol(name, type, 0);  // Offset irrelevant for global functions
         globalFunctionRegistry[name].paramTypes = paramTypes;
     }
@@ -98,8 +98,8 @@ void SymbolTable::initializeGlobalScope() {
     enterScope(ScopeType::GLOBAL);
 
     // Add predefined functions print and printi
-    insertSymbol("print", ast::BuiltInType::VOID, { ast::BuiltInType::STRING });
-    insertSymbol("printi",ast::BuiltInType::VOID, { ast::BuiltInType::INT });
+    currentScope->insertSymbolFunc("print", ast::BuiltInType::VOID, { ast::BuiltInType::STRING });
+    currentScope->insertSymbolFunc("printi",ast::BuiltInType::VOID, { ast::BuiltInType::INT });
 }
 
 
@@ -109,11 +109,13 @@ ast::BuiltInType SymbolTable::getSymbolType(std::string& name) {
     return ast::BuiltInType::NONE;
 }
 //function
-bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes) {
+bool Scope::insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes) {
     if (this->hasSymbol(name)) {
         return false; // Symbol already exists
     }
+    std::cout << "116 inserting " << name << std::endl;
     symbols[name] = Symbol(name, type,  paramTypes);
+    std::cout << "116 emit " << name << std::endl;
     this->scopePrinter.emitFunc(name, type,  paramTypes);
     this->offset++;
 
@@ -124,6 +126,7 @@ bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type) {
     if (this->hasSymbol(name)) {
         return false; // Symbol already exists
     }
+    std::cout << "128 inserting " << name << std::endl;
     symbols[name] = Symbol(name, type, this->offset);
     this->scopePrinter.emitVar(name, type,this->offset);
     this->offset++;
@@ -135,9 +138,11 @@ bool Scope::insertSymbol(const std::string& name, ast::BuiltInType type, int cou
     if (this->hasSymbol(name)) {
         return false; // Symbol already exists
     }
-    symbols[name] = Symbol(name, type, (size_t) count);
-    this->scopePrinter.emitVar(name, type,(size_t) count);
-
+    std::cout << "140 inserting " << name << std::endl;
+    symbols[name] = Symbol(name, type,  count);
+    std::cout << "now " << name << std::endl;
+    this->scopePrinter.emitVar(name, type, count);
+    std::cout << "140 inserting is done" << name << std::endl;
     return true;
 }
 

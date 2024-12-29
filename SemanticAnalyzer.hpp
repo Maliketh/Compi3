@@ -21,10 +21,11 @@ public:
 
     void register_func(ast::FuncDecl& node)
     {
+        std::cout << "adding a func" << std::endl;
         std::vector<ast::BuiltInType> paramTypes;
         for (auto formal : node.formals->formals)
             paramTypes.push_back(formal->type->type);
-        sym_table.insertSymbol(node.id->value, node.return_type->type ,paramTypes);
+        sym_table.insertSymbolFunc(node.id->value, node.return_type->type ,paramTypes);
         std::cout << "adding a func" << std::endl;
     }
 
@@ -172,6 +173,7 @@ public:
     } //change i belive
 
     ast::BuiltInType visit(ast::Call& node) override {
+        std::cout << "Analyzing Call node" << std::endl;
         Symbol *p_sym = sym_table.lookupSymbol(node.func_id->value);
         if (!sym_table.checkFunctionCall(node.func_id->value))
             output::errorUndefFunc(node.line, node.func_id->value);
@@ -181,7 +183,7 @@ public:
         visit(*node.args, &params);
         if (!compare_exp_list(params, p_sym->paramTypes))
             return p_sym->type;//output::errorPrototypeMismatch(node.line, node.func_id->value, p_sym->paramTypes);
-        std::cout << "Analyzing Call node" << std::endl;
+
         return p_sym->type;
     }
 
@@ -190,16 +192,18 @@ public:
     }
 
     ast::BuiltInType visit(ast::Statements& node) override {
+        std::cout << "Analyzing Statements node" << std::endl;
        for (auto statment : node.statements)
            statment->accept(*this);
         return  ast::BuiltInType::NONE;
     }
 
     ast::BuiltInType visit(ast::Break& node) override {
+        std::cout << "Analyzing Break node" << std::endl;
         if (sym_table.currentScope != nullptr ||
             sym_table.currentScope->scopeType != ScopeType::COND)
              output::errorUnexpectedBreak (node.line);
-        std::cout << "Analyzing Break node" << std::endl;
+
         return  ast::BuiltInType::NONE;
     }
 
@@ -241,16 +245,18 @@ public:
     }
 
     ast::BuiltInType visit(ast::While& node) override { //scope printer
+        std::cout << "Analyzing While node" << std::endl;
         if (node.condition->accept(*this, nullptr) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.line);
         sym_table.enterScope(ScopeType::COND);
         node.body->accept(*this);
         sym_table.exitScope();
-        std::cout << "Analyzing While node" << std::endl;
+
         return ast::BuiltInType::NONE;
     }
 
     ast::BuiltInType visit(ast::VarDecl& node) override {
+        std::cout << "Analyzing VarDecl node" << std::endl;
         std::string name = node.id->value;
         ast::BuiltInType type = visit (*node.type);
         ast::BuiltInType exp_type =  ast::BuiltInType::NONE;
@@ -285,20 +291,22 @@ public:
             }
         }
         sym_table.insertSymbol(name, type);
-        std::cout << "Analyzing VarDecl node" << std::endl;
+
         return  ast::BuiltInType::NONE;
     }
 
     ast::BuiltInType visit(ast::Assign& node) override {
+        std::cout << "Analyzing Assign node" << std::endl;
         ast::BuiltInType dest_type = node.id->accept(*this, nullptr);
         ast::BuiltInType src_type= node.exp->accept(*this, nullptr);
         if(dest_type != src_type || dest_type == ast::BuiltInType::NONE)
             output::errorMismatch(node.line);
-        std::cout << "Analyzing Assign node" << std::endl;
+
         return ast::BuiltInType::NONE;
     }
 
     ast::BuiltInType visit(ast::Formal& node) override {
+        std::cout << "Analyzing Formal node" << std::endl;
         if (sym_table.lookupSymbol(node.id->value))
             output::errorDef(node.line, node.id->value);
 
@@ -307,18 +315,19 @@ public:
     }
 
     ast::BuiltInType visit(ast::Formals& node, std::vector<ast::BuiltInType>* params_type,std::vector<std::string>* params_name )  {
+        std::cout << "Analyzing Formals node" << std::endl;
         for (auto formal : node.formals)
         {
             params_type->push_back(formal->type->type);
             params_name->push_back(formal->id->value);
         }
 
-        std::cout << "Analyzing Formals node" << std::endl;
         return ast::BuiltInType::NONE;
     }
 
 
     ast::BuiltInType visit(ast::FuncDecl& node) override {
+        std::cout << "Analyzing FuncDecl node" << std::endl;
         std::vector<ast::BuiltInType> params_type;
         std::vector<std::string> params_name;
         visit(*node.formals, &params_type, &params_name);
@@ -330,6 +339,7 @@ public:
 
 
     ast::BuiltInType visit(ast::Funcs& node) override {
+        std::cout << "Analyzing Funcs node" << std::endl;
         for (auto func : node.funcs)
             register_func (*func);
         for (auto func : node.funcs)
