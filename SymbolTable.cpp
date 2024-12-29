@@ -96,10 +96,11 @@ void SymbolTable::exitScope() {
 // Initialize the global scope with predefined functions (print, printi)
 void SymbolTable::initializeGlobalScope() {
     enterScope(ScopeType::GLOBAL);
-
+    std::vector<ast::BuiltInType> vec1 = { ast::BuiltInType::STRING };
+    std::vector<ast::BuiltInType> vec12 = { ast::BuiltInType::INT };
     // Add predefined functions print and printi
-    currentScope->insertSymbolFunc("print", ast::BuiltInType::VOID, { ast::BuiltInType::STRING });
-    currentScope->insertSymbolFunc("printi",ast::BuiltInType::VOID, { ast::BuiltInType::INT });
+    currentScope->insertSymbolFunc("print", ast::BuiltInType::VOID, vec1);
+    currentScope->insertSymbolFunc("printi",ast::BuiltInType::VOID, vec12);
 }
 
 

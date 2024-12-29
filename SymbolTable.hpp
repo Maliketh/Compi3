@@ -26,10 +26,10 @@ public:
 
     // Constructor for  variable
     Symbol() :paramTypes(ast::BuiltInType::NONE), is_func(false) {};
-    Symbol(const std::string& _name, ast::BuiltInType type, size_t offset = 0)
+    Symbol(const std::string& _name, ast::BuiltInType type, int offset = 0)
               : name(_name), type(type), offset(offset) ,is_func(false) {};
 
-    Symbol(const std::string& _name, ast::BuiltInType type ,const std::vector<ast::BuiltInType>& params, size_t offset = 0)
+    Symbol(const std::string& _name, ast::BuiltInType type ,const std::vector<ast::BuiltInType>& params, int offset = 0)
             : name(_name), type(type), offset(offset) ,paramTypes(params) , is_func(true) {};
 
     ast::BuiltInType getType() { return type; }
