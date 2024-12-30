@@ -25,7 +25,10 @@ public:
     bool is_func;
 
     // Constructor for  variable
-    Symbol() :paramTypes(ast::BuiltInType::NONE), is_func(false) {};
+    Symbol() : type(ast::BuiltInType::NONE), offset(0), is_func(false) {
+    paramTypes = {};  // Empty vector initialization for non-function symbols
+    };
+
     Symbol(const std::string& _name, ast::BuiltInType type, int offset = 0)
               : name(_name), type(type), offset(offset) ,is_func(false) {};
 
