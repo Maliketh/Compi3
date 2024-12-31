@@ -92,6 +92,7 @@ public:
     void exitScope();
     void initializeGlobalScope();
     ast::BuiltInType getSymbolType( std::string& name);
+    Symbol* getFunctionSymbol(const std::string& funcName);
 };
 
 #endif // SYMBOLTABLE_H
