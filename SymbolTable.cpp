@@ -109,12 +109,46 @@ ast::BuiltInType SymbolTable::getSymbolType(std::string& name) {
         return currentScope->getSymbolType(name);
     return ast::BuiltInType::NONE;
 }
+
+
+Symbol* SymbolTable::getFunctionSymbol(const std::string& funcName) {
+    // Check if the function is in the global function registry
+    auto it = globalFunctionRegistry.find(funcName);
+    if (it != globalFunctionRegistry.end()) {
+        // Print details of the found symbol
+        Symbol& foundSymbol = it->second;
+        std::cout << "Function symbol found: " << std::endl;
+        std::cout << "Name: " << foundSymbol.name << std::endl;
+        std::cout << "Type: " << static_cast<int>(foundSymbol.type) << std::endl;
+        std::cout << "is_func: " << foundSymbol.is_func << std::endl;
+        std::cout << "Offset: " << foundSymbol.offset << std::endl;
+        foundSymbol.is_func = true; // WORKS BUT IT'S DISGUSTING, SHOULD CHECK FURTHER!
+        // Print the parameters' types
+        std::cout << "Parameters: ";
+        for (const auto& param : foundSymbol.paramTypes) {
+            std::cout << static_cast<int>(param) << " ";
+        }
+        std::cout << std::endl;
+
+        // Return the symbol corresponding to the function
+        return &(it->second);
+    }
+
+    // Return nullptr if the function is not found
+    std::cout << "Function symbol not found: " << funcName << std::endl;
+    return nullptr;
+}
+
+
+
 //function
 bool Scope::insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes) {
     if (this->hasSymbol(name)) {
         return false; // Symbol already exists
     }
     std::cout << "116 inserting " << name << std::endl;
+    std::cout << "Inserting symbol: " << name << ", Type: " << static_cast<int>(type)
+          << ", ParamTypes size: " << paramTypes.size() << std::endl;
     symbols[name] = Symbol(name, type,  paramTypes);
     std::cout << "116 emit " << name << std::endl;
     this->scopePrinter.emitFunc(name, type,  paramTypes);
@@ -155,4 +189,3 @@ Symbol* Scope::getSymbol(const std::string& name) {
         return parent_scope->getSymbol(name);
     return nullptr;
 }
-
