@@ -242,6 +242,7 @@ public:
 
     ast::BuiltInType visit(ast::Statements& node) override {
         //sstd::cout << "Analyzing Statements node" << std::endl;
+
        for (auto statment : node.statements)
            statment->accept(*this);
         return  ast::BuiltInType::NONE;
@@ -282,14 +283,21 @@ public:
         if (node.condition->accept(*this) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.line);
         sym_table.enterScope(ScopeType::COND);
+        if (node.then->is_scope)
+            sym_table.enterScope(ScopeType::COND);
         node.then->accept(*this);
-        sym_table.exitScope();
+        if (node.then->is_scope)
+            sym_table.exitScope();
+
         if (node.otherwise != nullptr)
         {
-            sym_table.enterScope(ScopeType::COND);
-            node.then->accept(*this);
-            sym_table.exitScope();
+            if (node.otherwise->is_scope)
+                sym_table.enterScope(ScopeType::COND);
+            node.otherwise->accept(*this);
+            if (node.otherwise->is_scope)
+                sym_table.exitScope();
         }
+        sym_table.exitScope();
         //sstd::cout << "Analyzing If node" << std::endl;
         return  ast::BuiltInType::NONE;
     }
@@ -299,7 +307,11 @@ public:
         if (node.condition->accept(*this, nullptr) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.line);
         sym_table.enterScope(ScopeType::COND);
+        if (node.body->is_scope)
+            sym_table.enterScope(ScopeType::COND);
         node.body->accept(*this);
+        if (node.body->is_scope)
+            sym_table.exitScope();
         sym_table.exitScope();
 
         return ast::BuiltInType::NONE;

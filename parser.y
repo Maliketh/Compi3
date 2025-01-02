@@ -142,7 +142,11 @@ Statements:
 ;
 
 Statement:
-    LBRACE Statements RBRACE { $$ = std::dynamic_pointer_cast<ast::Statements>($2); }
+    LBRACE Statements RBRACE
+    {
+        $$ = std::dynamic_pointer_cast<ast::Statements>($2);
+        std::dynamic_pointer_cast<ast::Statements>($$)->is_scope = true;
+    }
     | Type ID SC
     {
         auto arg1 = std::dynamic_pointer_cast<ast::ID>($2);

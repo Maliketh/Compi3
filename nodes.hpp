@@ -53,6 +53,10 @@ namespace ast {
 
     /* Base class for all statements */
     class Statement : virtual public Node {
+    public:
+        bool is_scope;
+
+        Statement () :is_scope(false) {};
     };
 
     /* Number literal */
@@ -372,7 +376,6 @@ namespace ast {
     public:
         // List of statements
         std::vector <std::shared_ptr<Statement>> statements;
-
         // Constructor that receives no statements
         Statements() = default;
 

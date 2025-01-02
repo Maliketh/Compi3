@@ -69,6 +69,8 @@ void SymbolTable::enterScope(ScopeType type) {
     Scope* newScope = new Scope(type);
     if (type != ScopeType::GLOBAL)
         global->scopePrinter.beginScope();
+    if (type ==ScopeType::COND)
+        newScope->offset = currentScope->offset;
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ast::BuiltInType::NONE;
     currentScope = newScope;
@@ -161,7 +163,7 @@ int Scope::insertSymbol(const std::string& name, ast::BuiltInType type) {
     this->scopePrinter.emitVar(name, type,this->offset);
     this->offset++;
 
-    return this->offset;
+    return this->offset -1;
 }
 
 int Scope::insertSymbol(const std::string& name, ast::BuiltInType type, int count) {
