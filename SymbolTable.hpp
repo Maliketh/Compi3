@@ -36,6 +36,10 @@ public:
             : name(_name), type(type), offset(offset) ,paramTypes(params) , is_func(true) {};
 
     ast::BuiltInType getType() { return type; }
+
+    bool operator==(const Symbol& other) {
+        return this->name == other.name;
+    }
 } ;
 
 // Scope structure to represent a scope and its symbols
@@ -52,31 +56,41 @@ public:
 
    Scope (ScopeType type) : scopeType(type), parent_scope(nullptr), ret_scope_type(ast::BuiltInType::NONE) , offset(0) {};
    Scope (ScopeType type, Scope *p_scope) :  scopeType(type), ret_scope_type(ast::BuiltInType::NONE), parent_scope(p_scope), offset(p_scope->offset)  {};
-
+    bool hasSymbolInScope (const std::string& name) {
+        return symbols.find(name) != symbols.end();
+    }
     bool hasSymbol(const std::string& name) {
         bool found = symbols.find(name) != symbols.end();
-        if (!found && parent_scope!= nullptr)
+        //std::cout << "finding in current " << name << std::endl;
+        if (!found && parent_scope != nullptr) {
+           // std::cout << "finding in parent  " << name << std::endl;
             return parent_scope->hasSymbol(name);
+        }
         return found;
     }
     ast::BuiltInType getSymbolType( std::string& name)
     {
-        Symbol* p_symbol = getSymbol(name);
-        if (p_symbol != nullptr)
-            return p_symbol->getType();
+        Symbol p_symbol = getSymbol(name);
+        if (hasSymbol (name))
+        {
+            Symbol p_symbol = getSymbol(name);
+            return p_symbol.getType();
+        }
+
         return ast::BuiltInType::NONE;
     }
-    bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
-    bool insertSymbol(const std::string& name, ast::BuiltInType type);
-    bool insertSymbol(const std::string& name, ast::BuiltInType type, int count);
+    //bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
+    int insertSymbol(const std::string& name, ast::BuiltInType type);
+    int insertSymbol(const std::string& name, ast::BuiltInType type, int count);
 
-    Symbol* getSymbol(const std::string& name);
+    Symbol getSymbol(const std::string& name);
 };
 
 // SymbolTable class to manage multiple scopes
 class SymbolTable {
 public:
     Scope* currentScope;
+    Scope* global;
     std::unordered_map<std::string, Symbol> globalFunctionRegistry; // Global function registry
 
     SymbolTable();
@@ -84,7 +98,7 @@ public:
 
     bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
     bool insertSymbol(const std::string& name, ast::BuiltInType type);
-    Symbol* lookupSymbol(const std::string& name);
+    Symbol lookupSymbol(const std::string& name);
     bool isFunctionDefined(const std::string& funcName) const;
     bool checkFunctionCall(const std::string& funcName);
     void enterScope(ScopeType type);
@@ -92,7 +106,8 @@ public:
     void exitScope();
     void initializeGlobalScope();
     ast::BuiltInType getSymbolType( std::string& name);
-    Symbol* getFunctionSymbol(const std::string& funcName);
+    Symbol getFunctionSymbol(const std::string& funcName);
+
 };
 
 #endif // SYMBOLTABLE_H
