@@ -41,7 +41,8 @@ public:
     return ast::BuiltInType::INT;
 }
     ast::BuiltInType visit(ast::NumB& node, int* val) override {
-        *val = node.value;
+        if (val != nullptr)
+             *val = node.value;
         //sstd::cout << "Analyzing NumB node" << std::endl;
         return ast::BuiltInType::BYTE;
     }
@@ -52,7 +53,8 @@ public:
     }
 
     ast::BuiltInType visit(ast::Bool& node, int* val) override {
-        *val = node.value;
+        if (val != nullptr)
+            *val = node.value;
         //sstd::cout << "Analyzing Bool node" << std::endl;
         return ast::BuiltInType::BOOL;
     }
@@ -124,7 +126,7 @@ public:
         }
 
         // Handle byte conversion if needed
-        if (result_type == ast::BuiltInType::BYTE) {
+        if (result_type == ast::BuiltInType::BYTE && val != nullptr) {
             *val = convert_int_to_byte(*val, node.line);
         }
         //sstd::cout << "Stored result value: " << *val << std::endl;
@@ -190,11 +192,11 @@ public:
         int *exp_val = nullptr;
         ast::BuiltInType exp_type = node.exp->accept(*this,exp_val);
         if (node.target_type->type == ast::BuiltInType::BYTE && exp_type == ast::BuiltInType::INT) {
-            if (exp_val != nullptr)
+            if (exp_val != nullptr && val!= nullptr)
                 *val = convert_int_to_byte (*exp_val, node.line);
         }
         else if (node.target_type->type == ast::BuiltInType::INT && exp_type == ast::BuiltInType::BYTE) {
-            if (exp_val != nullptr)
+            if (exp_val != nullptr&& val!= nullptr)
                 *val = *exp_val;
         }
         else if (exp_type != node.target_type->type)
@@ -457,7 +459,7 @@ static bool compare_exp_list (std::vector<ast::BuiltInType>& paramTypesDecl, std
     if (paramTypesCall.size() == paramTypesDecl.size())
     {
         is_legal = true;
-        for (int i = 0; i < paramTypesCall.size() && is_legal; i++)
+        for (int i = 0; i < paramTypesDecl.size() && is_legal; i++)
             is_legal= paramTypesCall[i] == paramTypesDecl[i];
     }
     return is_legal;
