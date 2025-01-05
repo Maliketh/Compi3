@@ -288,14 +288,16 @@ public:
         node.then->accept(*this);
         if (node.then->is_scope)
             sym_table.exitScope();
-
+        sym_table.exitScope();
         if (node.otherwise != nullptr)
         {
+            sym_table.enterScope(ScopeType::COND);
             if (node.otherwise->is_scope)
                 sym_table.enterScope(ScopeType::COND);
             node.otherwise->accept(*this);
             if (node.otherwise->is_scope)
                 sym_table.exitScope();
+            sym_table.exitScope();
         }
         sym_table.exitScope();
         //sstd::cout << "Analyzing If node" << std::endl;
@@ -429,6 +431,8 @@ public:
         //std::cout << "Analyzing Funcs node" << std::endl;
         for (auto func : node.funcs)
             register_func (*func);
+        if (!sym_table.isFunctionDefined("main"))
+            output::errorMainMissing();
         for (auto func : node.funcs)
             visit(*func);
         std::cout << sym_table.global->scopePrinter <<std::endl;
