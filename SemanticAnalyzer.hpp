@@ -196,10 +196,10 @@ public:
                 *val = convert_int_to_byte (*exp_val, node.line);
         }
         else if (node.target_type->type == ast::BuiltInType::INT && exp_type == ast::BuiltInType::BYTE) {
-            if (exp_val != nullptr&& val!= nullptr)
+            if (exp_val != nullptr && val != nullptr)
                 *val = *exp_val;
         }
-        else if (exp_type != node.target_type->type)
+        else if (exp_val != nullptr && *exp_type != node.target_type->type)
             output::errorMismatch(node.line);
         return node.target_type->type;
 
