@@ -199,7 +199,7 @@ public:
             if (exp_val != nullptr && val != nullptr)
                 *val = *exp_val;
         }
-        else if (exp_val != nullptr && *exp_type != node.target_type->type)
+        else if (exp_type != node.target_type->type)
             output::errorMismatch(node.line);
         return node.target_type->type;
 
