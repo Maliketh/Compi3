@@ -66,7 +66,7 @@ continue                return CONTINUE;
 \"{printable_ascii}*\"   { yylval=std::make_shared<ast::String>(yytext); return STRING; }
 
 {whitespace}            ;
-.                       return ERR_GENERAL;
+.                       output::errorLex(yylineno); return ERR_GENERAL;
 
 
 
