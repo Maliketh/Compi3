@@ -127,16 +127,10 @@ public:
                     break;
             }
 
-            // Handle byte conversion if needed
-            if (result_type == ast::BuiltInType::BYTE && val != nullptr) {
-                *val = convert_int_to_byte(*val, node.line);
-            }
-            //sstd::cout << "Stored result value: " << *val << std::endl;
-        } else {
-            //sstd::cout << "No output pointer provided" << std::endl;
+          
+          
         }
 
-        //sstd::cout << "=== Finished BinOp Analysis ===" << std::endl;
         return result_type;
     }
 
@@ -346,7 +340,10 @@ public:
             // Detailed type compatibility check
             //sstd::cout << "\nType compatibility check:" << std::endl;
             //sstd::cout << "1. Direct type match? " << (declared_type == exp_type ? "Yes" : "No") << std::endl;
-
+            if (declared_type == ast::BuiltInType::BYTE)
+                int useless = convert_int_to_byte(init_value, node.line);
+            if (exp_type == ast::BuiltInType::BYTE)
+                int useless = convert_int_to_byte(init_value, node.line);
             if (declared_type == ast::BuiltInType::INT) {
                 //sstd::cout << "2. Assigning to INT:" << std::endl;
                 if (exp_type == ast::BuiltInType::BYTE) {
