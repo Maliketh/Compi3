@@ -139,7 +139,7 @@ namespace output {
         os << "---begin global scope---" << std::endl;
         os << printer.globalsBuffer.str();
         os << printer.buffer.str();
-        os << "---end global scope---" << std::endl;
+        os << "---end global scope---" ;
         return os;
     }
 }
