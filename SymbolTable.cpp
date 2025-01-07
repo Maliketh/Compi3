@@ -73,6 +73,12 @@ void SymbolTable::enterScope(ScopeType type) {
         newScope->offset = currentScope->offset;
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ast::BuiltInType::NONE;
+    //std::cout <<"Entered scope type: " << type << std::endl;
+    /*if (newScope->parent_scope != nullptr)
+        std::cout <<"prev scope type: " << newScope->parent_scope->scopeType << std::endl;
+    else
+        std::cout <<"prev scope null "  << std::endl;*/
+
     currentScope = newScope;
 }
 
@@ -82,6 +88,11 @@ void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& para
         global->scopePrinter.beginScope();
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ret_type;
+    /*std::cout <<"Entered scope type: Func"   << std::endl;
+    if (newScope->parent_scope != nullptr)
+        std::cout <<"prev scope type: " << newScope->parent_scope->scopeType << std::endl;
+    else
+        std::cout <<"prev scope null "  << std::endl;*/
     int location = -1;
     std::string name;
     ast::BuiltInType type_param = ast::BuiltInType::NONE;
@@ -100,6 +111,11 @@ void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& para
 // Exit the current scope
 void SymbolTable::exitScope() {
     Scope* oldScope = currentScope;
+    /*std::cout << "exiting scope : "<< oldScope->scopeType << std::endl;
+    if (oldScope->parent_scope != nullptr)
+        std::cout << " parent_scope scope type : "<< oldScope->parent_scope->scopeType << std::endl;
+    else
+        std::cout << " parent_scope null " << std::endl;*/
     if (oldScope->scopeType != ScopeType::GLOBAL)
         global->scopePrinter.endScope();
     currentScope = oldScope->parent_scope;

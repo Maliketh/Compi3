@@ -303,8 +303,8 @@ public:
                 sym_table.exitScope();
             sym_table.exitScope();
         }
-        sym_table.exitScope();
-        //sstd::cout << "Analyzing If node" << std::endl;
+        //sym_table.exitScope();
+        //std::cout << "Analyzing If node DoNe" << std::endl;
         return  ast::BuiltInType::NONE;
     }
 
@@ -319,7 +319,7 @@ public:
         if (node.body->is_scope)
             sym_table.exitScope();
         sym_table.exitScope();
-
+        //std::cout << "Analyzing While node done!" << std::endl;
         return ast::BuiltInType::NONE;
     }
 
