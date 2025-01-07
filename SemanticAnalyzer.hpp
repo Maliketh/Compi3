@@ -382,7 +382,8 @@ public:
         }
 
         // If we got here, types are compatible
-        sym_table.insertSymbol(node.id->value, declared_type);
+        if(sym_table.insertSymbol(node.id->value, declared_type) == false)
+        output::errorDef(node.line, node.id->value);
         //sstd::cout << "=== Successfully completed VarDecl Analysis ===" << std::endl;
 
         return ast::BuiltInType::NONE;
@@ -431,18 +432,73 @@ public:
     }
 
 
-    ast::BuiltInType visit(ast::Funcs& node) override {
-        //std::cout << "Analyzing Funcs node" << std::endl;
-        for (auto func : node.funcs)
-            register_func (*func);
-        if (!sym_table.isFunctionDefined("main"))
-            output::errorMainMissing();
-        for (auto func : node.funcs)
-            visit(*func);
-        std::cout << sym_table.global->scopePrinter <<std::endl;
-        return  ast::BuiltInType::NONE;
-        //sstd::cout << "Analyzing Funcs node" << std::endl;
+  ast::BuiltInType visit(ast::Funcs& node) override {
+    // Iterate over each function in the node and register them
+    for (auto& func : node.funcs) {
+        // Check if the function is already defined
+        if (sym_table.isFunctionDefined(func->id->value)) {
+            // Output error for redefined function, using the correct line
+            output::errorDef(func->line, func->id->value);  // Ensure func->line is correct here
+        }
+
+        // Check for duplicate variable names within the function parameters
+        std::unordered_map<std::string, int> paramNames;
+        bool hasDuplicate = false;
+        std::string duplicateVarName;
+
+        for (auto& param : func->formals->formals) {
+            const std::string& paramName = param->id->value;
+            paramNames[paramName]++;
+            
+            // If count exceeds 1, it's a duplicate
+            if (paramNames[paramName] > 1) {
+                hasDuplicate = true;
+                duplicateVarName = paramName;  // Store the name of the duplicated variable
+                break;
+            }
+        }
+
+        // If duplicates were found, print the name of the duplicate variable
+        if (hasDuplicate) {
+            output::errorDef(func->line, duplicateVarName); // Correct the line number issue here
+        }
+
+        // Register the function after checking for duplicates
+        register_func(*func);
     }
+
+    // Ensure that 'main' function is defined and is void
+    //std::cout << sym_table.getFunctionSymbol("main").type << std::endl;
+    if (!sym_table.isFunctionDefined("main") || sym_table.getFunctionSymbol("main").type != ast::BuiltInType::VOID) {
+        output::errorMainMissing();
+    }
+
+    // After registering all functions, check for parameter name conflicts with existing functions
+    for (auto& func : node.funcs) {
+        for (auto& param : func->formals->formals) {
+            const std::string& paramName = param->id->value;
+            // If the parameter name is already a function name, output an error
+            if (sym_table.isFunctionDefined(paramName)) {
+                output::errorDef(func->line, paramName);  // line number issue...!!!
+            }
+        }
+    }
+
+    // Visit each function again (recursive call)
+    for (auto& func : node.funcs) {
+        visit(*func);
+    }
+
+    // Print the symbol table state
+    std::cout << sym_table.global->scopePrinter << std::endl;
+
+    return ast::BuiltInType::NONE;
+}
+
+
+
+
+
 };
 
 static int convert_int_to_byte (int num, int line)
@@ -456,30 +512,36 @@ static bool is_num_type (ast::BuiltInType type) {
     return type == ast::BuiltInType::INT || type == ast::BuiltInType::BYTE;
 }
 
-static bool compare_exp_list (std::vector<ast::BuiltInType>& paramTypesDecl, std::vector<ast::BuiltInType>& paramTypesCall) {
+static bool compare_exp_list(std::vector<ast::BuiltInType>& paramTypesDecl, std::vector<ast::BuiltInType>& paramTypesCall) {
     bool is_legal = false;
-    if (paramTypesCall.size() == paramTypesDecl.size())
-    {
+    if (paramTypesCall.size() == paramTypesDecl.size()) {
         is_legal = true;
-        for (int i = 0; i < paramTypesDecl.size() && is_legal; i++)
-            is_legal= paramTypesCall[i] == paramTypesDecl[i];
+        for (int i = 0; i < paramTypesDecl.size() && is_legal; i++) {
+            // Check if one is 'int' and the other is 'byte' and allow the comparison to succeed
+            if ((paramTypesDecl[i] == ast::BuiltInType::INT && paramTypesCall[i] == ast::BuiltInType::BYTE) ||
+                (paramTypesDecl[i] == ast::BuiltInType::BYTE && paramTypesCall[i] == ast::BuiltInType::INT)) {
+                continue;  // Treat as equal
+            }
+            // Otherwise, check if the types are exactly equal
+            is_legal = paramTypesCall[i] == paramTypesDecl[i];
+        }
     }
     return is_legal;
-
 }
+
 
 std::string builtInTypeToString(const ast::BuiltInType &type) {
     switch (type) {
         case ast::BuiltInType::INT:
-            return "int";
+            return "INT";
         case ast::BuiltInType::BOOL:
-            return "bool";
+            return "BOOL";
         case ast::BuiltInType::BYTE:
-            return "byte";
+            return "BYTE";
         case ast::BuiltInType::VOID:
-            return "void";
+            return "VOID";
         case ast::BuiltInType::STRING:
-            return "string";
+            return "STRING";
         default:
             return "unknown";
     }
