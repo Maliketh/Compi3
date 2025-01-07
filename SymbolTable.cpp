@@ -14,7 +14,7 @@ SymbolTable::~SymbolTable() {
 }
 
 // Insert a symbol into the current scope
-bool SymbolTable::insertSymbolFunc(const std::string& name, ast::BuiltInType type,   const std::vector<ast::BuiltInType> &paramTypes) {
+bool SymbolTable::insertSymbolFunc(const std::string& name, ast::BuiltInType type, const std::vector<ast::BuiltInType> &paramTypes) {
     if (globalFunctionRegistry.find(name) != globalFunctionRegistry.end()) {
         //std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
         return false;
@@ -30,7 +30,7 @@ bool SymbolTable::insertSymbolFunc(const std::string& name, ast::BuiltInType typ
 }
 
 bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type) {
-    if (currentScope->hasSymbolInScope(name) || isFunctionDefined(name)) {
+    if (currentScope->hasSymbolInScope(name)) {
         //std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
         return false;
     }
@@ -104,7 +104,7 @@ void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& para
         global->insertSymbol(name,type_param, location);
         location--;
     }
-    newScope->ret_scope_type = ast::BuiltInType::NONE;
+  //  newScope->ret_scope_type = ast::BuiltInType::NONE;
     currentScope = newScope;
 }
 
