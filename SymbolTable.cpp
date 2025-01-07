@@ -140,8 +140,8 @@ Symbol SymbolTable::getFunctionSymbol(const std::string& funcName) {
         // Print the parameters' types
         //std::cout << "Parameters: ";
         //for (const auto& param : foundSymbol.paramTypes) {
-            //std::cout << static_cast<int>(param) << " ";
-       // }
+        //std::cout << static_cast<int>(param) << " ";
+        // }
         //std::cout << std::endl;
 
         // Return the symbol corresponding to the function
@@ -149,7 +149,7 @@ Symbol SymbolTable::getFunctionSymbol(const std::string& funcName) {
     }
 
     // Return nullptr if the function is not found
-   // //std::cout << "Function symbol not found: " << funcName << std::endl;
+    // //std::cout << "Function symbol not found: " << funcName << std::endl;
     return globalFunctionRegistry.end()->second;
 }
 
@@ -168,7 +168,7 @@ int Scope::insertSymbol(const std::string& name, ast::BuiltInType type) {
 
 int Scope::insertSymbol(const std::string& name, ast::BuiltInType type, int count) {
     //if (this->hasSymbol(name)) {
-     //   return false; // Symbol already exists
+    //   return false; // Symbol already exists
     //}
     //std::cout << "140 inserting " << name << std::endl;
     symbols[name] = Symbol(name, type,  count);

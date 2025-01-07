@@ -35,14 +35,14 @@ public:
     }
 
     ast::BuiltInType visit(ast::Num& node, int* val) override {
-    if (val != nullptr) {
-        *val = node.value;
+        if (val != nullptr) {
+            *val = node.value;
+        }
+        return ast::BuiltInType::INT;
     }
-    return ast::BuiltInType::INT;
-}
     ast::BuiltInType visit(ast::NumB& node, int* val) override {
         if (val != nullptr)
-             *val = node.value;
+            *val = node.value;
         //sstd::cout << "Analyzing NumB node" << std::endl;
         return ast::BuiltInType::BYTE;
     }
@@ -61,6 +61,8 @@ public:
 
     ast::BuiltInType visit(ast::ID& node, int* val) override {
         //sstd::cout << "Analyzing ID node for "<< node.value << std::endl;
+        if (sym_table.isFunctionDefined(node.value))
+            output::errorDefAsFunc(node.line, node.value);
         if (!sym_table.currentScope->hasSymbol(node.value))
         {
             //sstd::cout << "line 64 - sym not found" << std::endl;
@@ -74,69 +76,69 @@ public:
     }
 
     ast::BuiltInType visit(ast::BinOp& node, int* val) override {
-    //sstd::cout << "=== Starting BinOp Analysis ===" << std::endl;
-    
-    // Create local storage for values
-    int left_val = 0;
-    int right_val = 0;
-    
-    // Visit left operand
-    ast::BuiltInType type_1 = node.left->accept(*this, &left_val);
-    //sstd::cout << "Left operand type: " << static_cast<int>(type_1) << std::endl;
-    
-    // Visit right operand
-    ast::BuiltInType type_2 = node.right->accept(*this, &right_val);
-    //sstd::cout << "Right operand type: " << static_cast<int>(type_2) << std::endl;
+        //sstd::cout << "=== Starting BinOp Analysis ===" << std::endl;
 
-    // Check numeric types
-    if (!is_num_type(type_1) || !is_num_type(type_2)) {
-        //sstd::cout << "Error: Non-numeric types in arithmetic operation" << std::endl;
-        output::errorMismatch(node.line);
-        return ast::BuiltInType::NONE;
-    }
+        // Create local storage for values
+        int left_val = 0;
+        int right_val = 0;
 
-    // Calculate result type
-    ast::BuiltInType result_type;
-    if (type_1 == ast::BuiltInType::INT || type_2 == ast::BuiltInType::INT) {
-        result_type = ast::BuiltInType::INT;
-    } else {
-        result_type = ast::BuiltInType::BYTE;
-    }
+        // Visit left operand
+        ast::BuiltInType type_1 = node.left->accept(*this, &left_val);
+        //sstd::cout << "Left operand type: " << static_cast<int>(type_1) << std::endl;
 
-    // Only perform computation if we need to store the result
-    if (val != nullptr) {
-        // Calculate result value
-        switch (node.op) {
-            case ast::BinOpType::ADD:
-                *val = left_val + right_val;
-                break;
-            case ast::BinOpType::SUB:
-                *val = left_val - right_val;
-                break;
-            case ast::BinOpType::MUL:
-                *val = left_val * right_val;
-                break;
-            case ast::BinOpType::DIV:
-                if (right_val == 0) {
-                    output::errorMismatch(node.line);
-                    return ast::BuiltInType::NONE;
-                }
-                *val = left_val / right_val;
-                break;
+        // Visit right operand
+        ast::BuiltInType type_2 = node.right->accept(*this, &right_val);
+        //sstd::cout << "Right operand type: " << static_cast<int>(type_2) << std::endl;
+
+        // Check numeric types
+        if (!is_num_type(type_1) || !is_num_type(type_2)) {
+            //sstd::cout << "Error: Non-numeric types in arithmetic operation" << std::endl;
+            output::errorMismatch(node.line);
+            return ast::BuiltInType::NONE;
         }
 
-        // Handle byte conversion if needed
-        if (result_type == ast::BuiltInType::BYTE && val != nullptr) {
-            *val = convert_int_to_byte(*val, node.line);
+        // Calculate result type
+        ast::BuiltInType result_type;
+        if (type_1 == ast::BuiltInType::INT || type_2 == ast::BuiltInType::INT) {
+            result_type = ast::BuiltInType::INT;
+        } else {
+            result_type = ast::BuiltInType::BYTE;
         }
-        //sstd::cout << "Stored result value: " << *val << std::endl;
-    } else {
-        //sstd::cout << "No output pointer provided" << std::endl;
-    }
 
-    //sstd::cout << "=== Finished BinOp Analysis ===" << std::endl;
-    return result_type;
-}
+        // Only perform computation if we need to store the result
+        if (val != nullptr) {
+            // Calculate result value
+            switch (node.op) {
+                case ast::BinOpType::ADD:
+                    *val = left_val + right_val;
+                    break;
+                case ast::BinOpType::SUB:
+                    *val = left_val - right_val;
+                    break;
+                case ast::BinOpType::MUL:
+                    *val = left_val * right_val;
+                    break;
+                case ast::BinOpType::DIV:
+                    if (right_val == 0) {
+                        output::errorMismatch(node.line);
+                        return ast::BuiltInType::NONE;
+                    }
+                    *val = left_val / right_val;
+                    break;
+            }
+
+            // Handle byte conversion if needed
+            if (result_type == ast::BuiltInType::BYTE && val != nullptr) {
+                *val = convert_int_to_byte(*val, node.line);
+            }
+            //sstd::cout << "Stored result value: " << *val << std::endl;
+        } else {
+            //sstd::cout << "No output pointer provided" << std::endl;
+        }
+
+        //sstd::cout << "=== Finished BinOp Analysis ===" << std::endl;
+        return result_type;
+    }
 
 
     ast::BuiltInType visit(ast::RelOp& node, int* val) override {
@@ -218,7 +220,7 @@ public:
     ast::BuiltInType visit(ast::Call& node) override {
         //sstd::cout << "Analyzing Call node" << std::endl;
         bool is_defined = sym_table.isFunctionDefined(node.func_id->value);
-       // //std::cout <<node.func_id->value<<  " - func scope " << is_defined <<std::endl;
+        // //std::cout <<node.func_id->value<<  " - func scope " << is_defined <<std::endl;
         if (!is_defined && sym_table.currentScope->hasSymbol(node.func_id->value))
             output::errorDefAsVar(node.line, node.func_id->value);
         if (!is_defined)
@@ -245,8 +247,8 @@ public:
     ast::BuiltInType visit(ast::Statements& node) override {
         //sstd::cout << "Analyzing Statements node" << std::endl;
 
-       for (auto statment : node.statements)
-           statment->accept(*this);
+        for (auto statment : node.statements)
+            statment->accept(*this);
         return  ast::BuiltInType::NONE;
     }
 
@@ -254,7 +256,7 @@ public:
         //sstd::cout << "Analyzing Break node" << std::endl;
         if (sym_table.currentScope != nullptr ||
             sym_table.currentScope->scopeType != ScopeType::COND)
-             output::errorUnexpectedBreak (node.line);
+            output::errorUnexpectedBreak (node.line);
 
         return  ast::BuiltInType::NONE;
     }
@@ -270,8 +272,8 @@ public:
         if (sym_table.currentScope != nullptr ||
             sym_table.currentScope->scopeType != ScopeType::FUNC)
             //sstd::cout << "check error return" << std::endl;
-        if (node.exp != NULL && sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID)
-            output::errorMismatch( node.line);
+            if (node.exp != NULL && sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID)
+                output::errorMismatch( node.line);
         if (node.exp == NULL && sym_table.currentScope->ret_scope_type != ast::BuiltInType::VOID)
             output::errorMismatch( node.line);
         if (node.exp->accept(*this, nullptr) != sym_table.currentScope->ret_scope_type)
@@ -283,7 +285,7 @@ public:
     ast::BuiltInType visit(ast::If& node) override {
         //std::cout << "Analyzing If node" << std::endl;
         if (node.condition->accept(*this) != ast::BuiltInType::BOOL)
-            output::errorMismatch( node.line);
+            output::errorMismatch( node.condition->line);
         sym_table.enterScope(ScopeType::COND);
         if (node.then->is_scope)
             sym_table.enterScope(ScopeType::COND);
@@ -309,7 +311,7 @@ public:
     ast::BuiltInType visit(ast::While& node) override { //scope printer
         //std::cout << "Analyzing While node" << std::endl;
         if (node.condition->accept(*this, nullptr) != ast::BuiltInType::BOOL)
-            output::errorMismatch( node.line);
+            output::errorMismatch( node.condition->line);
         sym_table.enterScope(ScopeType::COND);
         if (node.body->is_scope)
             sym_table.enterScope(ScopeType::COND);
@@ -322,69 +324,69 @@ public:
     }
 
     ast::BuiltInType visit(ast::VarDecl& node) override {
-    //sstd::cout << "\n=== Starting VarDecl Analysis ===" << std::endl;
-    //sstd::cout << "Variable name: " << node.id->value << std::endl;
-    
-    // Get and print the declared type
-    ast::BuiltInType declared_type = visit(*node.type);
-    //sstd::cout << "Declared type is: " << static_cast<int>(declared_type) 
-    //          << " (INT=" << static_cast<int>(ast::BuiltInType::INT)
-      //        << ", BYTE=" << static_cast<int>(ast::BuiltInType::BYTE) << ")" << std::endl;
+        //sstd::cout << "\n=== Starting VarDecl Analysis ===" << std::endl;
+        //sstd::cout << "Variable name: " << node.id->value << std::endl;
 
-    if (node.init_exp != nullptr) {
-        //sstd::cout << "Has initialization expression" << std::endl;
-        int init_value = 0;
-        
-        // Get the type and value of the initialization expression
-        ast::BuiltInType exp_type = node.init_exp->accept(*this, &init_value);
-        //sstd::cout << "Expression evaluated to:" << std::endl;
-        //sstd::cout << "  Type: " << static_cast<int>(exp_type) << std::endl;
-        //sstd::cout << "  Value: " << init_value << std::endl;
-        
-        // Detailed type compatibility check
-        //sstd::cout << "\nType compatibility check:" << std::endl;
-        //sstd::cout << "1. Direct type match? " << (declared_type == exp_type ? "Yes" : "No") << std::endl;
-        
-        if (declared_type == ast::BuiltInType::INT) {
-            //sstd::cout << "2. Assigning to INT:" << std::endl;
-            if (exp_type == ast::BuiltInType::BYTE) {
-                //sstd::cout << "   BYTE->INT conversion allowed" << std::endl;
-            } else if (exp_type == ast::BuiltInType::INT) {
-                //sstd::cout << "   INT->INT assignment allowed" << std::endl;
-            } else {
-                //sstd::cout << "   Invalid type for INT assignment" << std::endl;
-                output::errorMismatch(node.line);
-                return ast::BuiltInType::NONE;
-            }
-        } 
-        else if (declared_type == ast::BuiltInType::BYTE) {
-            //sstd::cout << "2. Assigning to BYTE:" << std::endl;
-            if (exp_type == ast::BuiltInType::BYTE) {
-                //sstd::cout << "   BYTE->BYTE assignment allowed" << std::endl;
-            } else if (exp_type == ast::BuiltInType::INT) {
-                //sstd::cout << "   Attempting INT->BYTE conversion" << std::endl;
-                try {
-                    init_value = convert_int_to_byte(init_value, node.line);
-                    //sstd::cout << "   Conversion successful" << std::endl;
-                } catch (...) {
-                    //sstd::cout << "   Conversion failed - value out of range" << std::endl;
+        // Get and print the declared type
+        ast::BuiltInType declared_type = visit(*node.type);
+        //sstd::cout << "Declared type is: " << static_cast<int>(declared_type)
+        //          << " (INT=" << static_cast<int>(ast::BuiltInType::INT)
+        //        << ", BYTE=" << static_cast<int>(ast::BuiltInType::BYTE) << ")" << std::endl;
+
+        if (node.init_exp != nullptr) {
+            //sstd::cout << "Has initialization expression" << std::endl;
+            int init_value = 0;
+
+            // Get the type and value of the initialization expression
+            ast::BuiltInType exp_type = node.init_exp->accept(*this, &init_value);
+            //sstd::cout << "Expression evaluated to:" << std::endl;
+            //sstd::cout << "  Type: " << static_cast<int>(exp_type) << std::endl;
+            //sstd::cout << "  Value: " << init_value << std::endl;
+
+            // Detailed type compatibility check
+            //sstd::cout << "\nType compatibility check:" << std::endl;
+            //sstd::cout << "1. Direct type match? " << (declared_type == exp_type ? "Yes" : "No") << std::endl;
+
+            if (declared_type == ast::BuiltInType::INT) {
+                //sstd::cout << "2. Assigning to INT:" << std::endl;
+                if (exp_type == ast::BuiltInType::BYTE) {
+                    //sstd::cout << "   BYTE->INT conversion allowed" << std::endl;
+                } else if (exp_type == ast::BuiltInType::INT) {
+                    //sstd::cout << "   INT->INT assignment allowed" << std::endl;
+                } else {
+                    //sstd::cout << "   Invalid type for INT assignment" << std::endl;
                     output::errorMismatch(node.line);
                     return ast::BuiltInType::NONE;
                 }
-            } else {
-                //sstd::cout << "   Invalid type for BYTE assignment" << std::endl;
-                output::errorMismatch(node.line);
-                return ast::BuiltInType::NONE;
+            }
+            else if (declared_type == ast::BuiltInType::BYTE) {
+                //sstd::cout << "2. Assigning to BYTE:" << std::endl;
+                if (exp_type == ast::BuiltInType::BYTE) {
+                    //sstd::cout << "   BYTE->BYTE assignment allowed" << std::endl;
+                } else if (exp_type == ast::BuiltInType::INT) {
+                    //sstd::cout << "   Attempting INT->BYTE conversion" << std::endl;
+                    try {
+                        init_value = convert_int_to_byte(init_value, node.line);
+                        //sstd::cout << "   Conversion successful" << std::endl;
+                    } catch (...) {
+                        //sstd::cout << "   Conversion failed - value out of range" << std::endl;
+                        output::errorMismatch(node.line);
+                        return ast::BuiltInType::NONE;
+                    }
+                } else {
+                    //sstd::cout << "   Invalid type for BYTE assignment" << std::endl;
+                    output::errorMismatch(node.line);
+                    return ast::BuiltInType::NONE;
+                }
             }
         }
+
+        // If we got here, types are compatible
+        sym_table.insertSymbol(node.id->value, declared_type);
+        //sstd::cout << "=== Successfully completed VarDecl Analysis ===" << std::endl;
+
+        return ast::BuiltInType::NONE;
     }
-    
-    // If we got here, types are compatible
-    sym_table.insertSymbol(node.id->value, declared_type);
-    //sstd::cout << "=== Successfully completed VarDecl Analysis ===" << std::endl;
-    
-    return ast::BuiltInType::NONE;
-}
 
     ast::BuiltInType visit(ast::Assign& node) override {
         //sstd::cout << "Analyzing Assign node" << std::endl;
