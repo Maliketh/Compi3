@@ -82,8 +82,31 @@ public:
     //bool insertSymbolFunc(const std::string& name, ast::BuiltInType type,  const std::vector<ast::BuiltInType> &paramTypes);
     int insertSymbol(const std::string& name, ast::BuiltInType type);
     int insertSymbol(const std::string& name, ast::BuiltInType type, int count);
-
     Symbol getSymbol(const std::string& name);
+
+
+   bool hasFunctionAncestor() const {
+    const Scope* current = this; // Start with the current scope
+    while (current != nullptr) { // Traverse up the parent scopes
+        if (current->scopeType == ScopeType::FUNC) {
+            return true; // Found an ancestor with FUNC scope type
+        }
+        current = current->parent_scope; // Move to the parent scope
+    }
+    return false; // No FUNC ancestor found
+}
+  ast::BuiltInType getFunctionAncestorReturnType() const {
+    const Scope* current = this; // Start with the current scope
+    while (current != nullptr) { // Traverse up the parent scopes
+        if (current->scopeType == ScopeType::FUNC) {
+            return current->ret_scope_type; // Return the return type of the FUNC ancestor
+        }
+        current = current->parent_scope; // Move to the parent scope
+    }
+    return ast::BuiltInType::NONE; // No FUNC ancestor found
+}
+
+
 };
 
 // SymbolTable class to manage multiple scopes
