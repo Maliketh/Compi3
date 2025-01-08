@@ -185,15 +185,18 @@ public:
 
     ast::BuiltInType visit(ast::Cast& node, int* val) override {
         //sstd::cout << "Analyzing Cast node" << std::endl;
-        int *exp_val = nullptr;
-        ast::BuiltInType exp_type = node.exp->accept(*this,exp_val);
+        int exp_val = -6826;
+        ast::BuiltInType exp_type = node.exp->accept(*this,&exp_val);
         if (node.target_type->type == ast::BuiltInType::BYTE && exp_type == ast::BuiltInType::INT) {
-            if (exp_val != nullptr && val!= nullptr)
-                *val = convert_int_to_byte (*exp_val, node.line);
+            if (exp_val != -6826 ) {
+                convert_int_to_byte(exp_val, node.line);
+                if (val != nullptr)
+                    *val = exp_val;
+            }
         }
         else if (node.target_type->type == ast::BuiltInType::INT && exp_type == ast::BuiltInType::BYTE) {
-            if (exp_val != nullptr && val != nullptr)
-                *val = *exp_val;
+            if (exp_val != -6826 && val != nullptr)
+                *val = exp_val;
         }
         else if (exp_type != node.target_type->type)
             output::errorMismatch(node.line);
@@ -248,7 +251,7 @@ public:
 
     ast::BuiltInType visit(ast::Break& node) override {
         //sstd::cout << "Analyzing Break node" << std::endl;
-        if (sym_table.currentScope != nullptr ||
+        if (sym_table.currentScope == nullptr ||
             sym_table.currentScope->scopeType != ScopeType::COND)
             output::errorUnexpectedBreak (node.line);
 
@@ -256,7 +259,7 @@ public:
     }
 
     ast::BuiltInType visit(ast::Continue& node) override {
-        if (sym_table.currentScope != nullptr ||
+        if (sym_table.currentScope == nullptr ||
             sym_table.currentScope->scopeType != ScopeType::COND)
             output::errorUnexpectedContinue (node.line);
         return  ast::BuiltInType::NONE;
