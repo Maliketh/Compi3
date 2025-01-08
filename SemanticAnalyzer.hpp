@@ -393,10 +393,17 @@ public:
 
     ast::BuiltInType visit(ast::Assign& node) override {
         //sstd::cout << "Analyzing Assign node" << std::endl;
+        int exp_val = -8754;
         ast::BuiltInType dest_type = node.id->accept(*this, nullptr);
-        ast::BuiltInType src_type= node.exp->accept(*this, nullptr);
-        if(dest_type != src_type || dest_type == ast::BuiltInType::NONE)
+        ast::BuiltInType src_type= node.exp->accept(*this, &exp_val);
+        if (dest_type == ast::BuiltInType::BYTE && src_type == ast::BuiltInType::INT && exp_val !=-8754 )
+            convert_int_to_byte(exp_val, node.line);
+
+
+        if((!(is_num_type(dest_type) && is_num_type(src_type)) && dest_type != src_type) || dest_type == ast::BuiltInType::NONE)
             output::errorMismatch(node.line);
+
+
 
         return ast::BuiltInType::NONE;
     }
