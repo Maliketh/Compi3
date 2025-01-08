@@ -220,7 +220,7 @@ Type:
 
 
 Exp_cast :
-    LPAREN Type RPAREN Exp {$$ = std::make_shared<ast::Cast>(std::dynamic_pointer_cast<ast::Exp>($2), std::dynamic_pointer_cast<ast::Type>($1));}
+    LPAREN Type RPAREN Exp {$$ = std::make_shared<ast::Cast>(std::dynamic_pointer_cast<ast::Exp>($4), std::dynamic_pointer_cast<ast::Type>($2));}
     ;
 
 Exp_t :

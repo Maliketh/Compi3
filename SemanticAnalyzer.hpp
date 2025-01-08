@@ -127,8 +127,8 @@ public:
                     break;
             }
 
-          
-          
+
+
         }
 
         return result_type;
@@ -380,7 +380,7 @@ public:
 
         // If we got here, types are compatible
         if(sym_table.insertSymbol(node.id->value, declared_type) == false)
-        output::errorDef(node.line, node.id->value);
+            output::errorDef(node.line, node.id->value);
         //sstd::cout << "=== Successfully completed VarDecl Analysis ===" << std::endl;
 
         return ast::BuiltInType::NONE;
@@ -429,68 +429,68 @@ public:
     }
 
 
-  ast::BuiltInType visit(ast::Funcs& node) override {
-    // Iterate over each function in the node and register them
-    for (auto& func : node.funcs) {
-        // Check if the function is already defined
-        if (sym_table.isFunctionDefined(func->id->value)) {
-            // Output error for redefined function, using the correct line
-            output::errorDef(func->line, func->id->value);  // Ensure func->line is correct here
+    ast::BuiltInType visit(ast::Funcs& node) override {
+        // Iterate over each function in the node and register them
+        for (auto& func : node.funcs) {
+            // Check if the function is already defined
+            if (sym_table.isFunctionDefined(func->id->value)) {
+                // Output error for redefined function, using the correct line
+                output::errorDef(func->line, func->id->value);  // Ensure func->line is correct here
+            }
+
+            // Check for duplicate variable names within the function parameters
+            std::unordered_map<std::string, int> paramNames;
+            bool hasDuplicate = false;
+            std::string duplicateVarName;
+
+            for (auto& param : func->formals->formals) {
+                const std::string& paramName = param->id->value;
+                paramNames[paramName]++;
+
+                // If count exceeds 1, it's a duplicate
+                if (paramNames[paramName] > 1) {
+                    hasDuplicate = true;
+                    duplicateVarName = paramName;  // Store the name of the duplicated variable
+                    break;
+                }
+            }
+
+            // If duplicates were found, print the name of the duplicate variable
+            if (hasDuplicate) {
+                output::errorDef(func->line, duplicateVarName); // Correct the line number issue here
+            }
+
+            // Register the function after checking for duplicates
+            register_func(*func);
         }
 
-        // Check for duplicate variable names within the function parameters
-        std::unordered_map<std::string, int> paramNames;
-        bool hasDuplicate = false;
-        std::string duplicateVarName;
+        // Ensure that 'main' function is defined and is void
+        //std::cout << sym_table.getFunctionSymbol("main").type << std::endl;
+        if (!sym_table.isFunctionDefined("main") || sym_table.getFunctionSymbol("main").type != ast::BuiltInType::VOID) {
+            output::errorMainMissing();
+        }
 
-        for (auto& param : func->formals->formals) {
-            const std::string& paramName = param->id->value;
-            paramNames[paramName]++;
-            
-            // If count exceeds 1, it's a duplicate
-            if (paramNames[paramName] > 1) {
-                hasDuplicate = true;
-                duplicateVarName = paramName;  // Store the name of the duplicated variable
-                break;
+        // After registering all functions, check for parameter name conflicts with existing functions
+        for (auto& func : node.funcs) {
+            for (auto& param : func->formals->formals) {
+                const std::string& paramName = param->id->value;
+                // If the parameter name is already a function name, output an error
+                if (sym_table.isFunctionDefined(paramName)) {
+                    output::errorDef(func->line, paramName);  // line number issue...!!!
+                }
             }
         }
 
-        // If duplicates were found, print the name of the duplicate variable
-        if (hasDuplicate) {
-            output::errorDef(func->line, duplicateVarName); // Correct the line number issue here
+        // Visit each function again (recursive call)
+        for (auto& func : node.funcs) {
+            visit(*func);
         }
 
-        // Register the function after checking for duplicates
-        register_func(*func);
+        // Print the symbol table state
+        std::cout << sym_table.global->scopePrinter << std::endl;
+
+        return ast::BuiltInType::NONE;
     }
-
-    // Ensure that 'main' function is defined and is void
-    //std::cout << sym_table.getFunctionSymbol("main").type << std::endl;
-    if (!sym_table.isFunctionDefined("main") || sym_table.getFunctionSymbol("main").type != ast::BuiltInType::VOID) {
-        output::errorMainMissing();
-    }
-
-    // After registering all functions, check for parameter name conflicts with existing functions
-    for (auto& func : node.funcs) {
-        for (auto& param : func->formals->formals) {
-            const std::string& paramName = param->id->value;
-            // If the parameter name is already a function name, output an error
-            if (sym_table.isFunctionDefined(paramName)) {
-                output::errorDef(func->line, paramName);  // line number issue...!!!
-            }
-        }
-    }
-
-    // Visit each function again (recursive call)
-    for (auto& func : node.funcs) {
-        visit(*func);
-    }
-
-    // Print the symbol table state
-    std::cout << sym_table.global->scopePrinter << std::endl;
-
-    return ast::BuiltInType::NONE;
-}
 
 
 
