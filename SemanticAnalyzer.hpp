@@ -438,7 +438,7 @@ public:
             // Check if the function is already defined
             if (sym_table.isFunctionDefined(func->id->value)) {
                 // Output error for redefined function, using the correct line
-                output::errorDef(func->line, func->id->value);  // Ensure func->line is correct here
+                output::errorDef(func->id->line, func->id->value);  // Ensure func->line is correct here
             }
 
             // Check for duplicate variable names within the function parameters
