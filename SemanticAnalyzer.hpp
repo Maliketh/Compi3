@@ -272,26 +272,26 @@ public:
     }
 
     // Check if the scope type is FUNC
-    if (sym_table.currentScope->scopeType != ScopeType::FUNC) {
-        output::errorMismatch(node.line);
+    if (!sym_table.currentScope->hasFunctionAncestor()) {
+        output::errorMismatch(node.line); //tests 26 is wrong here...
         return ast::BuiltInType::NONE;
     }
 
     // Check for mismatched void return
-    if (node.exp == nullptr && sym_table.currentScope->ret_scope_type != ast::BuiltInType::VOID) {
+    if (node.exp == nullptr && sym_table.currentScope->getFunctionAncestorReturnType() != ast::BuiltInType::VOID) {
         output::errorMismatch(node.line);
         return ast::BuiltInType::NONE;
     }
 
     // Check for mismatched non-void return
     if (node.exp != nullptr) {
-        if (sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID) {
+        if (sym_table.currentScope->getFunctionAncestorReturnType() == ast::BuiltInType::VOID) {
             output::errorMismatch(node.line);
             return ast::BuiltInType::NONE;
         }
 
         // Check the expression's type
-        if (node.exp->accept(*this, nullptr) != sym_table.currentScope->ret_scope_type) {
+        if (node.exp->accept(*this, nullptr) != sym_table.currentScope->getFunctionAncestorReturnType()) {
             output::errorMismatch(node.line);
             return ast::BuiltInType::NONE;
         }
@@ -399,8 +399,12 @@ public:
                     return ast::BuiltInType::NONE;
                 }
             }
+            else if(is_num_type(declared_type) == false || is_num_type(exp_type) == false)
+        {
+            if(exp_type != declared_type)
+                output::errorMismatch(node.line);
         }
-
+        }
         // If we got here, types are compatible
         if(sym_table.insertSymbol(node.id->value, declared_type) == false)
             output::errorDef(node.line, node.id->value);
