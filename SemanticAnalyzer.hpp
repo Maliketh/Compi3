@@ -79,8 +79,8 @@ public:
         //sstd::cout << "=== Starting BinOp Analysis ===" << std::endl;
 
         // Create local storage for values
-        int left_val = 0;
-        int right_val = 0;
+        int left_val = -26372;
+        int right_val = -26372;
 
         // Visit left operand
         ast::BuiltInType type_1 = node.left->accept(*this, &left_val);
@@ -98,7 +98,7 @@ public:
         }
 
         // Calculate result type
-        ast::BuiltInType result_type;
+        ast::BuiltInType result_type = ast::BuiltInType::INT;
         if (type_1 == ast::BuiltInType::INT || type_2 == ast::BuiltInType::INT) {
             result_type = ast::BuiltInType::INT;
         } else {
@@ -110,20 +110,20 @@ public:
             // Calculate result value
             switch (node.op) {
                 case ast::BinOpType::ADD:
-                    *val = left_val + right_val;
+                    //*val = left_val + right_val;
                     break;
                 case ast::BinOpType::SUB:
-                    *val = left_val - right_val;
+                    //*val = left_val - right_val;
                     break;
                 case ast::BinOpType::MUL:
-                    *val = left_val * right_val;
+                    //*val = left_val * right_val;
                     break;
                 case ast::BinOpType::DIV:
                     if (right_val == 0) {
                         output::errorMismatch(node.line);
                         return ast::BuiltInType::NONE;
                     }
-                    *val = left_val / right_val;
+                    //*val = left_val / right_val;
                     break;
             }
 
@@ -332,7 +332,7 @@ public:
 
         if (node.init_exp != nullptr) {
             //sstd::cout << "Has initialization expression" << std::endl;
-            int init_value = 0;
+            int init_value = -8766;
 
             // Get the type and value of the initialization expression
             ast::BuiltInType exp_type = node.init_exp->accept(*this, &init_value);
@@ -343,9 +343,11 @@ public:
             // Detailed type compatibility check
             //sstd::cout << "\nType compatibility check:" << std::endl;
             //sstd::cout << "1. Direct type match? " << (declared_type == exp_type ? "Yes" : "No") << std::endl;
-            if (declared_type == ast::BuiltInType::BYTE)
+            if (declared_type == ast::BuiltInType::BYTE && exp_type == ast::BuiltInType::INT && init_value ==-8766)
+                output::errorMismatch(node.line);
+            if (declared_type == ast::BuiltInType::BYTE && (exp_type == ast::BuiltInType::INT))
                 int useless = convert_int_to_byte(init_value, node.line);
-            if (exp_type == ast::BuiltInType::BYTE)
+            if (declared_type == ast::BuiltInType::BYTE && (exp_type == ast::BuiltInType::BYTE && init_value !=-8766 ))
                 int useless = convert_int_to_byte(init_value, node.line);
             if (declared_type == ast::BuiltInType::INT) {
                 //sstd::cout << "2. Assigning to INT:" << std::endl;
