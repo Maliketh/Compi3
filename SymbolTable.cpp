@@ -101,6 +101,9 @@ void SymbolTable::enterScope(ScopeType type, const std::set<std::string>& cond_s
         newScope->condition_symbols = cond_symbols;
         newScope->offset = currentScope->offset;
     }
+    if (type ==ScopeType::WHILE || type ==ScopeType::IF ) {
+        newScope->symbols = currentScope->symbols;
+    }
 
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ast::BuiltInType::NONE;
