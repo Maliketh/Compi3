@@ -266,15 +266,19 @@ public:
     }
 
     ast::BuiltInType  visit(ast::Return& node) override {
+        //std::cout << "check error return" << std::endl;
         if (sym_table.currentScope != nullptr ||
-            sym_table.currentScope->scopeType != ScopeType::FUNC)
-            //sstd::cout << "check error return" << std::endl;
-            if (node.exp != NULL && sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID)
-                output::errorMismatch( node.line);
-        if (node.exp == NULL && sym_table.currentScope->ret_scope_type != ast::BuiltInType::VOID)
+            sym_table.currentScope->scopeType != ScopeType::FUNC);
+       // std::cout << "check error return 272" << std::endl;
+        if (node.exp != nullptr && sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID)
             output::errorMismatch( node.line);
-        if (node.exp->accept(*this, nullptr) != sym_table.currentScope->ret_scope_type)
+        //std::cout << "check error return 275" << std::endl;
+        if (node.exp == nullptr && sym_table.currentScope->ret_scope_type != ast::BuiltInType::VOID)
             output::errorMismatch( node.line);
+        //std::cout << "check error return 277" << std::endl;
+        if (node.exp != nullptr && node.exp->accept(*this, nullptr) != sym_table.currentScope->ret_scope_type)
+            output::errorMismatch( node.line);
+        //std::cout << "check error return 281" << std::endl;
         return  ast::BuiltInType::NONE;
 
     }
