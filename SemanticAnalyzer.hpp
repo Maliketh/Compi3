@@ -301,8 +301,9 @@ public:
         // Check the expression's type
         ast::BuiltInType func_type = sym_table.currentScope->getFunctionAncestorReturnType();
         ast::BuiltInType exp_type = node.exp->accept(*this, nullptr);
-        if(!(exp_type ==ast::BuiltInType::INT &&  func_type == ast::BuiltInType::BYTE)) {
+        if(!(exp_type ==ast::BuiltInType::BYTE &&  func_type == ast::BuiltInType::INT)) {
             if (exp_type != func_type) {
+                //std::cout <<"here?" << std::endl;
                 output::errorMismatch(node.line);
                 return ast::BuiltInType::NONE;
             }
