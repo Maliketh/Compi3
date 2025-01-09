@@ -51,6 +51,7 @@ public:
     Scope* parent_scope;
     ScopeType scopeType;
     ast::BuiltInType ret_scope_type;
+    std::set<std::string> condition_symbols;
 
     int offset;
 
@@ -70,6 +71,17 @@ public:
         }
         return found;
     }
+
+    bool hasCondSymbol(const std::string& name) {
+        bool found = condition_symbols.find(name) != condition_symbols.end();
+        //std::cout << "finding in current " << name << std::endl;
+        if (!found && parent_scope != nullptr) {
+            // std::cout << "finding in parent  " << name << std::endl;
+            return parent_scope->hasCondSymbol(name);
+        }
+        return found;
+    }
+
     ast::BuiltInType getSymbolType( std::string& name)
     {
         Symbol p_symbol = getSymbol(name);
@@ -129,6 +141,7 @@ public:
     bool isFunctionDefined(const std::string& funcName) const;
     bool checkFunctionCall(const std::string& funcName);
     void enterScope(ScopeType type);
+    void enterScope(ScopeType type, const std::set<std::string>& cond_symbols);
     void enterScope (ScopeType type, std::vector<ast::BuiltInType>& params_type,std::vector<std::string>& params_name, ast::BuiltInType ret_type);
     void exitScope();
     void initializeGlobalScope();

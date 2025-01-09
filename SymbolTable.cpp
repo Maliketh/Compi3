@@ -38,7 +38,9 @@ bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type) {
         }
        // scope = scope->parent_scope;
    //}
-
+    if (scope->scopeType == ScopeType::WHILE ||scope->scopeType == ScopeType::IF || scope->scopeType == ScopeType::INFUNC )
+        if (scope->hasCondSymbol(name))
+            return false;
     // Insert the symbol into the current scope
     int location = currentScope->insertSymbol(name, type);
 
@@ -78,6 +80,27 @@ void SymbolTable::enterScope(ScopeType type) {
         global->scopePrinter.beginScope();
     if (type ==ScopeType::WHILE || type ==ScopeType::IF || type ==ScopeType::INFUNC)
         newScope->offset = currentScope->offset;
+    newScope->parent_scope = currentScope;
+    newScope->ret_scope_type = ast::BuiltInType::NONE;
+    //std::cout <<"Entered scope type: " << type << std::endl;
+    /*if (newScope->parent_scope != nullptr)
+        std::cout <<"prev scope type: " << newScope->parent_scope->scopeType << std::endl;
+    else
+        std::cout <<"prev scope null "  << std::endl;*/
+
+    currentScope = newScope;
+}
+
+void SymbolTable::enterScope(ScopeType type, const std::set<std::string>& cond_symbols)
+{
+    Scope* newScope = new Scope(type);
+    if (type != ScopeType::GLOBAL)
+        global->scopePrinter.beginScope();
+    if (type ==ScopeType::WHILE || type ==ScopeType::IF || type ==ScopeType::INFUNC) {
+        newScope->condition_symbols = cond_symbols;
+        newScope->offset = currentScope->offset;
+    }
+
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ast::BuiltInType::NONE;
     //std::cout <<"Entered scope type: " << type << std::endl;

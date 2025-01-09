@@ -13,6 +13,8 @@ static bool is_num_type (ast::BuiltInType type);
 
 static bool compare_exp_list (std::vector<ast::BuiltInType>& paramTypesDecl, std::vector<ast::BuiltInType>& paramTypesCall);
 
+//void getExpSymbols (ast::Exp& node, std::unordered_map<std::string, Symbol>& symbols);
+
 std::vector<std::string> builtInTypeToString(const std::vector<ast::BuiltInType>& types);
 
 std::vector<std::string> builtInTypeVectorToString(const std::vector<ast::BuiltInType>& types) ;
@@ -59,8 +61,9 @@ public:
         return ast::BuiltInType::BOOL;
     }
 
-    ast::BuiltInType visit(ast::ID& node, int* val) override {
+    ast::BuiltInType visit(ast::ID& node, int* symbols) override {
         //sstd::cout << "Analyzing ID node for "<< node.value << std::endl;
+
         if (sym_table.isFunctionDefined(node.value))
             output::errorDefAsFunc(node.line, node.value);
         if (!sym_table.currentScope->hasSymbol(node.value))
@@ -71,6 +74,7 @@ public:
         ast::BuiltInType type = sym_table.getSymbolType(node.value);
         if (type ==  ast::BuiltInType::NONE)
             output::errorUndef(node.line, node.value);
+
         return type;
 
     }
@@ -308,7 +312,7 @@ public:
         //std::cout << "Analyzing If node" << std::endl;
         if (node.condition->accept(*this) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.condition->line);
-        sym_table.enterScope(ScopeType::IF);
+        sym_table.enterScope(ScopeType::IF,  node.condition->get_symbols());
         //if (node.then->is_scope)
           //  sym_table.enterScope(ScopeType::COND);
         node.then->accept(*this);
@@ -334,7 +338,7 @@ public:
         //std::cout << "Analyzing While node" << std::endl;
         if (node.condition->accept(*this, nullptr) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.condition->line);
-        sym_table.enterScope(ScopeType::WHILE);
+        sym_table.enterScope(ScopeType::WHILE, node.condition->get_symbols());
        // if (node.body->is_scope)
          //   sym_table.enterScope(ScopeType::);
         node.body->accept(*this);

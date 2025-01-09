@@ -19,26 +19,58 @@ namespace ast {
 
     Bool::Bool(bool value) : Exp(), value(value) {}
 
-    ID::ID(const char *str) : Exp(), value(str) {}
+    ID::ID(const char *str) : Exp(), value(str) { exp_symbols.insert(str); }
 
     BinOp::BinOp(std::shared_ptr<Exp> left, std::shared_ptr<Exp> right, BinOpType op)
-            : Exp(), left(std::move(left)), right(std::move(right)), op(op) {}
+            : Exp(), left(std::move(left)), right(std::move(right)), op(op)
+    {
+        if(left != nullptr)
+            this->exp_symbols.insert(left->exp_symbols.begin(), left->exp_symbols.end());
+        if(right != nullptr)
+            this->exp_symbols.insert(right->exp_symbols.begin(),right->exp_symbols.end());
+    }
 
     RelOp::RelOp(std::shared_ptr<Exp> left, std::shared_ptr<Exp> right, RelOpType op)
-            : Exp(), left(std::move(left)), right(std::move(right)), op(op) {}
+            : Exp(), left(std::move(left)), right(std::move(right)), op(op)
+    {
+        if(left != nullptr)
+            this->exp_symbols.insert(left->exp_symbols.begin(), left->exp_symbols.end());
+        if(right != nullptr)
+            this->exp_symbols.insert(right->exp_symbols.begin(),right->exp_symbols.end());
+    }
 
     Type::Type(BuiltInType type) : Node(), type(type) {}
 
     Cast::Cast(std::shared_ptr<Exp> exp, std::shared_ptr<Type> target_type)
-            : Exp(), exp(std::move(exp)), target_type(std::move(target_type)) {}
+            : Exp(), exp(std::move(exp)), target_type(std::move(target_type))
+    {
+        if(exp != nullptr)
+            this->exp_symbols.insert(exp->exp_symbols.begin(), exp->exp_symbols.end());
+    }
 
-    Not::Not(std::shared_ptr<Exp> exp) : Exp(), exp(std::move(exp)) {}
+    Not::Not(std::shared_ptr<Exp> exp) : Exp(), exp(std::move(exp))
+    {
+        if(exp != nullptr)
+            this->exp_symbols.insert(exp->exp_symbols.begin(), exp->exp_symbols.end());
+    }
 
     And::And(std::shared_ptr<Exp> left, std::shared_ptr<Exp> right)
-            : Exp(), left(std::move(left)), right(std::move(right)) {}
+            : Exp(), left(std::move(left)), right(std::move(right))
+    {
+        if(left != nullptr)
+            this->exp_symbols.insert(left->exp_symbols.begin(), left->exp_symbols.end());
+        if(right != nullptr)
+            this->exp_symbols.insert(right->exp_symbols.begin(),right->exp_symbols.end());
+    }
 
     Or::Or(std::shared_ptr<Exp> left, std::shared_ptr<Exp> right)
-            : Exp(), left(std::move(left)), right(std::move(right)) {}
+            : Exp(), left(std::move(left)), right(std::move(right))
+    {
+        if(left != nullptr)
+            this->exp_symbols.insert(left->exp_symbols.begin(), left->exp_symbols.end());
+        if(right != nullptr)
+            this->exp_symbols.insert(right->exp_symbols.begin(),right->exp_symbols.end());
+    }
 
     ExpList::ExpList(std::shared_ptr<Exp> exp) : Node(), exps({std::move(exp)}) {}
 

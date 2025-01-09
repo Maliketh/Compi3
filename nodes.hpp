@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 #include "visitor.hpp"
 
 namespace ast {
@@ -48,6 +49,11 @@ namespace ast {
     /* Base class for all expressions */
     class Exp : virtual public Node {
     public:
+        std::set<std::string> exp_symbols;
+        std::set<std::string> get_symbols()
+        {
+            return exp_symbols;
+        }
         Exp() = default;
     };
 
