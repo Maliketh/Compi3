@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 CC = g++
-CFLAGS = -std=c++17 -g
+CFLAGS = -std=c++17
 
 all: clean
 	flex scanner.lex

@@ -45,6 +45,7 @@ public:
     ast::BuiltInType visit(ast::NumB& node, int* val) override {
         if (val != nullptr)
             *val = node.value;
+        convert_int_to_byte (node.value, node.line);
         //sstd::cout << "Analyzing NumB node" << std::endl;
         return ast::BuiltInType::BYTE;
     }
@@ -298,9 +299,13 @@ public:
         }
 
         // Check the expression's type
-        if (node.exp->accept(*this, nullptr) != sym_table.currentScope->getFunctionAncestorReturnType()) {
-            output::errorMismatch(node.line);
-            return ast::BuiltInType::NONE;
+        ast::BuiltInType func_type = sym_table.currentScope->getFunctionAncestorReturnType();
+        ast::BuiltInType exp_type = node.exp->accept(*this, nullptr);
+        if(!(exp_type ==ast::BuiltInType::INT &&  func_type == ast::BuiltInType::BYTE)) {
+            if (exp_type != func_type) {
+                output::errorMismatch(node.line);
+                return ast::BuiltInType::NONE;
+            }
         }
     }
 
@@ -321,7 +326,7 @@ public:
         sym_table.exitScope();
         if (node.otherwise != nullptr)
         {
-            sym_table.enterScope(ScopeType::IF);
+            sym_table.enterScope(ScopeType::IF, node.condition->get_symbols());
             //if (node.otherwise->is_scope)
                 //sym_table.enterScope(ScopeType::COND);
             node.otherwise->accept(*this);
