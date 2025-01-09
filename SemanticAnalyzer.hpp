@@ -265,23 +265,41 @@ public:
         return  ast::BuiltInType::NONE;
     }
 
-    ast::BuiltInType  visit(ast::Return& node) override {
-        //std::cout << "check error return" << std::endl;
-        if (sym_table.currentScope != nullptr ||
-            sym_table.currentScope->scopeType != ScopeType::FUNC);
-       // std::cout << "check error return 272" << std::endl;
-        if (node.exp != nullptr && sym_table.currentScope->ret_scope_type == ast::BuiltInType::VOID)
-            output::errorMismatch( node.line);
-        //std::cout << "check error return 275" << std::endl;
-        if (node.exp == nullptr && sym_table.currentScope->ret_scope_type != ast::BuiltInType::VOID)
-            output::errorMismatch( node.line);
-        //std::cout << "check error return 277" << std::endl;
-        if (node.exp != nullptr && node.exp->accept(*this, nullptr) != sym_table.currentScope->ret_scope_type)
-            output::errorMismatch( node.line);
-        //std::cout << "check error return 281" << std::endl;
-        return  ast::BuiltInType::NONE;
-
+    ast::BuiltInType visit(ast::Return& node) override {
+    // Ensure currentScope is not null before accessing its members
+    if (sym_table.currentScope == nullptr) {
+        return ast::BuiltInType::NONE; // Return a safe default
     }
+
+    // Check if the scope type is FUNC
+    if (!sym_table.currentScope->hasFunctionAncestor()) {
+        output::errorMismatch(node.line); //tests 26 is wrong here...
+        return ast::BuiltInType::NONE;
+    }
+
+    // Check for mismatched void return
+    if (node.exp == nullptr && sym_table.currentScope->getFunctionAncestorReturnType() != ast::BuiltInType::VOID) {
+        output::errorMismatch(node.line);
+        return ast::BuiltInType::NONE;
+    }
+
+    // Check for mismatched non-void return
+    if (node.exp != nullptr) {
+        if (sym_table.currentScope->getFunctionAncestorReturnType() == ast::BuiltInType::VOID) {
+            output::errorMismatch(node.line);
+            return ast::BuiltInType::NONE;
+        }
+
+        // Check the expression's type
+        if (node.exp->accept(*this, nullptr) != sym_table.currentScope->getFunctionAncestorReturnType()) {
+            output::errorMismatch(node.line);
+            return ast::BuiltInType::NONE;
+        }
+    }
+
+    return ast::BuiltInType::NONE;
+}
+
 
     ast::BuiltInType visit(ast::If& node) override {
         //std::cout << "Analyzing If node" << std::endl;
@@ -327,7 +345,6 @@ public:
     ast::BuiltInType visit(ast::VarDecl& node) override {
         //sstd::cout << "\n=== Starting VarDecl Analysis ===" << std::endl;
         //sstd::cout << "Variable name: " << node.id->value << std::endl;
-
         // Get and print the declared type
         ast::BuiltInType declared_type = visit(*node.type);
         //sstd::cout << "Declared type is: " << static_cast<int>(declared_type)
@@ -371,22 +388,23 @@ public:
                     //sstd::cout << "   BYTE->BYTE assignment allowed" << std::endl;
                 } else if (exp_type == ast::BuiltInType::INT) {
                     //sstd::cout << "   Attempting INT->BYTE conversion" << std::endl;
-                    try {
+                    
+                        output::errorMismatch(node.line);
                         init_value = convert_int_to_byte(init_value, node.line);
                         //sstd::cout << "   Conversion successful" << std::endl;
-                    } catch (...) {
-                        //sstd::cout << "   Conversion failed - value out of range" << std::endl;
-                        output::errorMismatch(node.line);
-                        return ast::BuiltInType::NONE;
-                    }
+                  
                 } else {
                     //sstd::cout << "   Invalid type for BYTE assignment" << std::endl;
                     output::errorMismatch(node.line);
                     return ast::BuiltInType::NONE;
                 }
             }
+            else if(is_num_type(declared_type) == false || is_num_type(exp_type) == false)
+        {
+            if(exp_type != declared_type)
+                output::errorMismatch(node.line);
         }
-
+        }
         // If we got here, types are compatible
         if(sym_table.insertSymbol(node.id->value, declared_type) == false)
             output::errorDef(node.line, node.id->value);
@@ -400,14 +418,12 @@ public:
         int exp_val = -8754;
         ast::BuiltInType dest_type = node.id->accept(*this, nullptr);
         ast::BuiltInType src_type= node.exp->accept(*this, &exp_val);
-        if (dest_type == ast::BuiltInType::BYTE && src_type == ast::BuiltInType::INT && exp_val !=-8754 )
-            convert_int_to_byte(exp_val, node.line);
-
 
         if((!(is_num_type(dest_type) && is_num_type(src_type)) && dest_type != src_type) || dest_type == ast::BuiltInType::NONE)
             output::errorMismatch(node.line);
-
-
+        
+        if(dest_type == ast::BuiltInType::BYTE && src_type == ast::BuiltInType::INT )
+            output::errorMismatch(node.line);
 
         return ast::BuiltInType::NONE;
     }
@@ -473,7 +489,7 @@ public:
 
             // If duplicates were found, print the name of the duplicate variable
             if (hasDuplicate) {
-                output::errorDef(func->line, duplicateVarName); // Correct the line number issue here
+                output::errorDef(func->id->line, duplicateVarName); // Correct the line number issue here
             }
 
             // Register the function after checking for duplicates
@@ -492,7 +508,7 @@ public:
                 const std::string& paramName = param->id->value;
                 // If the parameter name is already a function name, output an error
                 if (sym_table.isFunctionDefined(paramName)) {
-                    output::errorDef(func->line, paramName);  // line number issue...!!!
+                    output::errorDef(func->id->line, paramName);  // line number issue...!!!
                 }
             }
         }

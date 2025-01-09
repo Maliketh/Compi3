@@ -30,17 +30,24 @@ bool SymbolTable::insertSymbolFunc(const std::string& name, ast::BuiltInType typ
 }
 
 bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type) {
-    if (currentScope->hasSymbolInScope(name)) {
-        //std::cerr << "Error: Symbol '" << name << "' already defined in this scope.\n";
-        return false;
+    // Check if the symbol already exists in the current scope or any parent scopes
+    Scope* scope = currentScope;
+    while (scope != nullptr) {
+        if (scope->hasSymbolInScope(name)) {
+            return false;
+        }
+        scope = scope->parent_scope;
     }
-    //std::cout <<   "inserting sy to table" << name << std::endl;
+
     // Insert the symbol into the current scope
     int location = currentScope->insertSymbol(name, type);
+
+    // Optionally, you can also insert it into the global scope
     global->insertSymbol(name, type, location);
 
     return true;
 }
+
 
 
 // Look up a symbol in the current scope or higher scopes
