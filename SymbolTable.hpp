@@ -60,7 +60,10 @@ public:
    Scope (ScopeType type) : scopeType(type), parent_scope(nullptr), ret_scope_type(ast::BuiltInType::NONE) , offset(0) {};
    Scope (ScopeType type, Scope *p_scope) :  scopeType(type), ret_scope_type(ast::BuiltInType::NONE), parent_scope(p_scope), offset(p_scope->offset)  {};
     bool hasSymbolInScope (const std::string& name) {
-        return symbols.find(name) != symbols.end();
+        bool found = symbols.find(name) != symbols.end();
+        if (!found)
+            found = hasCondSymbol(name);
+        return found;
     }
     bool hasSymbol(const std::string& name) {
         bool found = symbols.find(name) != symbols.end();
@@ -71,6 +74,7 @@ public:
            // std::cout << "finding in parent  " << name << std::endl;
             return parent_scope->hasSymbol(name);
         }
+
         return found;
     }
 

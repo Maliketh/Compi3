@@ -357,6 +357,10 @@ public:
         //sstd::cout << "Declared type is: " << static_cast<int>(declared_type)
         //          << " (INT=" << static_cast<int>(ast::BuiltInType::INT)
         //        << ", BYTE=" << static_cast<int>(ast::BuiltInType::BYTE) << ")" << std::endl;
+        if ((sym_table.currentScope->scopeType == ScopeType::WHILE ||
+            sym_table.currentScope->scopeType == ScopeType::IF ||
+            sym_table.currentScope->scopeType == ScopeType::INFUNC) && sym_table.currentScope->hasCondSymbol(node.id->value))
+            output::errorDef(node.line, node.id->value);
 
         if (node.init_exp != nullptr) {
             //sstd::cout << "Has initialization expression" << std::endl;
@@ -493,6 +497,8 @@ public:
                     break;
                 }
             }
+            if (func->id->value == "main" && !paramNames.empty())
+                output::errorMainMissing();
 
             // If duplicates were found, print the name of the duplicate variable
             if (hasDuplicate) {
@@ -505,7 +511,7 @@ public:
 
         // Ensure that 'main' function is defined and is void
         //std::cout << sym_table.getFunctionSymbol("main").type << std::endl;
-        if (!sym_table.isFunctionDefined("main") || sym_table.getFunctionSymbol("main").type != ast::BuiltInType::VOID) {
+        if (!sym_table.isFunctionDefined("main") || sym_table.getFunctionSymbol("main").type != ast::BuiltInType::VOID ) {
             output::errorMainMissing();
         }
 
