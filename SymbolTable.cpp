@@ -76,7 +76,7 @@ void SymbolTable::enterScope(ScopeType type) {
     Scope* newScope = new Scope(type);
     if (type != ScopeType::GLOBAL)
         global->scopePrinter.beginScope();
-    if (type ==ScopeType::COND)
+    if (type ==ScopeType::WHILE || type ==ScopeType::IF || type ==ScopeType::INFUNC)
         newScope->offset = currentScope->offset;
     newScope->parent_scope = currentScope;
     newScope->ret_scope_type = ast::BuiltInType::NONE;

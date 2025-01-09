@@ -243,16 +243,19 @@ public:
 
     ast::BuiltInType visit(ast::Statements& node) override {
         //sstd::cout << "Analyzing Statements node" << std::endl;
-
+        if (node.is_scope)
+            sym_table.enterScope(ScopeType::INFUNC);
         for (auto statment : node.statements)
             statment->accept(*this);
+        if (node.is_scope)
+            sym_table.exitScope();
         return  ast::BuiltInType::NONE;
     }
 
     ast::BuiltInType visit(ast::Break& node) override {
         //sstd::cout << "Analyzing Break node" << std::endl;
         if (sym_table.currentScope == nullptr ||
-            sym_table.currentScope->scopeType != ScopeType::COND)
+            !sym_table.currentScope->hasTypeAncestor(ScopeType::WHILE) )
             output::errorUnexpectedBreak (node.line);
 
         return  ast::BuiltInType::NONE;
@@ -260,7 +263,7 @@ public:
 
     ast::BuiltInType visit(ast::Continue& node) override {
         if (sym_table.currentScope == nullptr ||
-            sym_table.currentScope->scopeType != ScopeType::COND)
+                !sym_table.currentScope->hasTypeAncestor(ScopeType::WHILE) )
             output::errorUnexpectedContinue (node.line);
         return  ast::BuiltInType::NONE;
     }
@@ -272,7 +275,7 @@ public:
     }
 
     // Check if the scope type is FUNC
-    if (!sym_table.currentScope->hasFunctionAncestor()) {
+    if (!sym_table.currentScope->hasTypeAncestor(ScopeType::FUNC)) {
         output::errorMismatch(node.line); //tests 26 is wrong here...
         return ast::BuiltInType::NONE;
     }
@@ -305,21 +308,21 @@ public:
         //std::cout << "Analyzing If node" << std::endl;
         if (node.condition->accept(*this) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.condition->line);
-        sym_table.enterScope(ScopeType::COND);
-        if (node.then->is_scope)
-            sym_table.enterScope(ScopeType::COND);
+        sym_table.enterScope(ScopeType::IF);
+        //if (node.then->is_scope)
+          //  sym_table.enterScope(ScopeType::COND);
         node.then->accept(*this);
-        if (node.then->is_scope)
-            sym_table.exitScope();
+       // if (node.then->is_scope)
+         //   sym_table.exitScope();
         sym_table.exitScope();
         if (node.otherwise != nullptr)
         {
-            sym_table.enterScope(ScopeType::COND);
-            if (node.otherwise->is_scope)
-                sym_table.enterScope(ScopeType::COND);
+            sym_table.enterScope(ScopeType::IF);
+            //if (node.otherwise->is_scope)
+                //sym_table.enterScope(ScopeType::COND);
             node.otherwise->accept(*this);
-            if (node.otherwise->is_scope)
-                sym_table.exitScope();
+           // if (node.otherwise->is_scope)
+             //   sym_table.exitScope();
             sym_table.exitScope();
         }
         //sym_table.exitScope();
@@ -331,12 +334,12 @@ public:
         //std::cout << "Analyzing While node" << std::endl;
         if (node.condition->accept(*this, nullptr) != ast::BuiltInType::BOOL)
             output::errorMismatch( node.condition->line);
-        sym_table.enterScope(ScopeType::COND);
-        if (node.body->is_scope)
-            sym_table.enterScope(ScopeType::COND);
+        sym_table.enterScope(ScopeType::WHILE);
+       // if (node.body->is_scope)
+         //   sym_table.enterScope(ScopeType::);
         node.body->accept(*this);
-        if (node.body->is_scope)
-            sym_table.exitScope();
+       // if (node.body->is_scope)
+         //   sym_table.exitScope();
         sym_table.exitScope();
         //std::cout << "Analyzing While node done!" << std::endl;
         return ast::BuiltInType::NONE;

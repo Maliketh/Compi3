@@ -12,7 +12,9 @@
 enum ScopeType {
     GLOBAL,
     FUNC,
-    COND
+    IF,
+    WHILE,
+    INFUNC
 };
 
 // Symbol structure to represent variables and functions
@@ -85,16 +87,18 @@ public:
     Symbol getSymbol(const std::string& name);
 
 
-   bool hasFunctionAncestor() const {
+   bool hasTypeAncestor(ScopeType type) const {
     const Scope* current = this; // Start with the current scope
     while (current != nullptr) { // Traverse up the parent scopes
-        if (current->scopeType == ScopeType::FUNC) {
+        if (current->scopeType == type) {
             return true; // Found an ancestor with FUNC scope type
         }
         current = current->parent_scope; // Move to the parent scope
     }
     return false; // No FUNC ancestor found
-}
+    }
+
+
   ast::BuiltInType getFunctionAncestorReturnType() const {
     const Scope* current = this; // Start with the current scope
     while (current != nullptr) { // Traverse up the parent scopes
