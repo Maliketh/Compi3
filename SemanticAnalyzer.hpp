@@ -62,7 +62,7 @@ public:
     }
 
     ast::BuiltInType visit(ast::ID& node, int* symbols) override {
-        //sstd::cout << "Analyzing ID node for "<< node.value << std::endl;
+        //std::cout << "Analyzing ID node for "<< node.value << std::endl;
 
         if (sym_table.isFunctionDefined(node.value))
             output::errorDefAsFunc(node.line, node.value);

@@ -42,10 +42,11 @@ bool SymbolTable::insertSymbol(const std::string& name, ast::BuiltInType type) {
         if (scope->hasCondSymbol(name))
             return false;
     // Insert the symbol into the current scope
+    //std::cout <<"entering symbole " << name << "to scope type: " << currentScope->scopeType << std::endl;
     int location = currentScope->insertSymbol(name, type);
 
     // Optionally, you can also insert it into the global scope
-    global->insertSymbol(name, type, location);
+    global->scopePrinter.emitVar(name, type,location);
 
     return true;
 }
@@ -131,7 +132,7 @@ void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& para
         name =params_names[i];
         type_param = params_type[i];
         newScope->insertSymbol(name,type_param, location);
-        global->insertSymbol(name,type_param, location);
+        global->scopePrinter.emitVar(name, type_param,location);
         location--;
     }
   //  newScope->ret_scope_type = ast::BuiltInType::NONE;
@@ -141,14 +142,16 @@ void SymbolTable::enterScope(ScopeType type, std::vector<ast::BuiltInType>& para
 // Exit the current scope
 void SymbolTable::exitScope() {
     Scope* oldScope = currentScope;
-    /*std::cout << "exiting scope : "<< oldScope->scopeType << std::endl;
-    if (oldScope->parent_scope != nullptr)
-        std::cout << " parent_scope scope type : "<< oldScope->parent_scope->scopeType << std::endl;
-    else
-        std::cout << " parent_scope null " << std::endl;*/
+    //std::cout << "exiting scope : "<< oldScope->scopeType << std::endl;
+    /* if (oldScope->parent_scope != nullptr)
+         std::cout << " parent_scope scope type : "<< oldScope->parent_scope->scopeType << std::endl;
+     else
+         std::cout << " parent_scope null " << std::endl;*/
     if (oldScope->scopeType != ScopeType::GLOBAL)
         global->scopePrinter.endScope();
     currentScope = oldScope->parent_scope;
+   // if(currentScope != nullptr)
+        //std::cout << "parent scope : "<< currentScope->scopeType << std::endl;
 
     delete oldScope;
 }
@@ -206,7 +209,7 @@ int Scope::insertSymbol(const std::string& name, ast::BuiltInType type) {
 
     symbols[name] = Symbol(name, type, this->offset);
     //std::cout <<   "inserted to scope" << name << std::endl;
-    this->scopePrinter.emitVar(name, type,this->offset);
+    //this->scopePrinter.emitVar(name, type,this->offset);
     this->offset++;
 
     return this->offset -1;

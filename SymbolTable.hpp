@@ -64,8 +64,10 @@ public:
     }
     bool hasSymbol(const std::string& name) {
         bool found = symbols.find(name) != symbols.end();
-        //std::cout << "finding in current " << name << std::endl;
-        if (!found && parent_scope != nullptr) {
+
+            //std::cout << "got " << name <<" in scope "<< scopeType<< std::endl;
+           // std::cout <<"Entered scope type: " << type << std::endl;
+        if (!found && parent_scope != nullptr ) {
            // std::cout << "finding in parent  " << name << std::endl;
             return parent_scope->hasSymbol(name);
         }
